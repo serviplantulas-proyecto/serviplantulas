@@ -2,7 +2,8 @@ import express from "express";
 
 import {
     registro,
-    login
+    login,
+    verificarCuenta
 } from "../controllers/usuario-controller.js";
 
 import {
@@ -29,6 +30,12 @@ const router = express.Router();
 //     "email_usuarios": "juan@gmail.com",
 //     "contrasena_usuarios": "123456"
 // }
+//
+// El rol se asigna automáticamente como "usuario".
+// La cuenta queda inicialmente sin verificar.
+// Se genera automáticamente un código de verificación
+// de 6 dígitos y se envía al correo mediante Brevo.
+// El código tiene una duración de 15 minutos.
 
 router.post("/register", registro);
 
@@ -41,8 +48,28 @@ router.post("/register", registro);
 //     "email_usuarios": "juan@gmail.com",
 //     "contrasena_usuarios": "123456"
 // }
+//
+// La cuenta debe estar verificada antes de iniciar sesión.
+// Si la cuenta está verificada, se genera un token JWT.
 
 router.post("/login", login);
+
+
+// POST - Verificar cuenta
+// URL: http://localhost:3000/auth/verify-account
+// Body: JSON
+//
+// {
+//     "email_usuarios": "juan@gmail.com",
+//     "codigo": "123456"
+// }
+//
+// El código es enviado al correo durante el registro.
+// El código tiene una duración de 15 minutos.
+// Si el código es correcto y no ha expirado,
+// la cuenta queda verificada.
+
+router.post("/verify-account", verificarCuenta);
 
 
 // POST - Solicitar recuperación de contraseña
@@ -52,6 +79,9 @@ router.post("/login", login);
 // {
 //     "email": "juan@gmail.com"
 // }
+//
+// Se genera y envía un código de recuperación
+// al correo electrónico.
 
 router.post("/forgot-password", forgotPassword);
 
@@ -65,6 +95,10 @@ router.post("/forgot-password", forgotPassword);
 //     "codigo": "123456",
 //     "nuevaContrasena": "NuevaContraseña123"
 // }
+//
+// Verifica el código enviado para recuperar la contraseña.
+// Si el código es correcto y no ha expirado,
+// se actualiza la contraseña del usuario.
 
 router.post("/verify-code", verifyCode);
 
