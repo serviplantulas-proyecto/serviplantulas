@@ -1,4 +1,4 @@
-import {obtenerTodos, obtenerPorId, crearProveedor, actualizarProveedor, eliminarProveedor} from "../models/proveedores-model.js";
+import { obtenerTodos, obtenerPorId, crearProveedor, actualizarProveedor, eliminarProveedor } from "../models/proveedores-model.js";
 
 export const listarProveedores = async (req, res) => {
     try {
@@ -111,7 +111,6 @@ export const eliminar = async (req, res) => {
         return res.status(200).json({
             message: 'Proveedor eliminado'
         });
-
     } catch (error) {
         return res.status(500).json({
             error: error.message

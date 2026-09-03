@@ -20,14 +20,14 @@ const app = express();
 
 //leer el json
 app.use(cors());
-app.use(express.json());    
+app.use(express.json());
 
 //creamos la ruta
 app.get("/", (req, res) => {
     res.json({
-        mensaje:"bienvenido al backend de serviplantulas",
-        estado:"en linea.",
-        vercion:"2.0.0",
+        mensaje: "bienvenido al backend de serviplantulas",
+        estado: "en linea.",
+        vercion: "2.0.0",
     });
 });
 //rutas de autentificacion
@@ -43,7 +43,7 @@ app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }));
+}));
 
 //configuramos el puerto 
 const PORT = 3000;

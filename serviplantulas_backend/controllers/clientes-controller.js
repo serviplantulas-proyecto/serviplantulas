@@ -1,4 +1,4 @@
-import {obtenerTodos, obtenerPorId, obtenerPorCedula, crearCliente, actualizarCliente, eliminarCliente} from "../models/clientes-model.js";
+import { obtenerTodos, obtenerPorId, obtenerPorCedula, crearCliente, actualizarCliente, eliminarCliente } from "../models/clientes-model.js";
 
 export const listarClientes = async (req, res) => {
     try {
