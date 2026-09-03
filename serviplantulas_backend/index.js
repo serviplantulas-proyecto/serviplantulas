@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
     res.json({
         mensaje:"bienvenido al backend de serviplantulas",
         estado:"en linea.",
-        vercion:"1.0.0",
+        vercion:"2.0.0",
     });
 });
 //rutas de autentificacion
