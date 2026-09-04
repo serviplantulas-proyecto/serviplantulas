@@ -27,7 +27,7 @@ const router = express.Router();
 // Body: No requiere
 // Authorization: Bearer Token
 
-router.get("/", listarPedidos);
+router.get("/", verificarToken, listarPedidos);
 
 
 // GET - Obtener pedido por ID
@@ -38,7 +38,7 @@ router.get("/", listarPedidos);
 // Body: No requiere
 // Authorization: Bearer Token
 
-router.get("/:id", obtenerPedido);
+router.get("/:id", verificarToken, obtenerPedido);
 
 
 // POST - Crear pedido
@@ -64,7 +64,7 @@ router.get("/:id", obtenerPedido);
 //
 // Authorization: Bearer Token
 
-router.post("/", crear);
+router.post("/", verificarToken, crear);
 
 
 // PUT - Actualizar pedido
@@ -79,7 +79,7 @@ router.post("/", crear);
 //
 // Authorization: Bearer Token
 
-router.put("/:id", editar);
+router.put("/:id", verificarToken, editar);
 
 
 // DELETE - Eliminar pedido
@@ -90,6 +90,6 @@ router.put("/:id", editar);
 // Body: No requiere
 // Authorization: Bearer Token
 
-router.delete("/:id", eliminar);
+router.delete("/:id", verificarToken, eliminar);
 
 export default router;
