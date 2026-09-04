@@ -9,6 +9,7 @@ import authRouter from "./routers/usuarios.js";
 import pedidosRouter from "./routers/pedidos.js";
 import detallePedidosRouter from "./routers/detalle-pedidos.js";
 import notificacionesRouter from "./routers/notificaciones.js";
+import chatRouters from "./routers/chatbot.js";
 import cors from "cors";
 
 //cargamos las variables
@@ -39,6 +40,7 @@ app.use("/auth", authRouter);
 app.use("/pedidos", pedidosRouter);
 app.use("/detalle-pedidos", detallePedidosRouter);
 app.use("/notificaciones", notificacionesRouter);
+app.use("/chatbot", chatRouters);
 app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
