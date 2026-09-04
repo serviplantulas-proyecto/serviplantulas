@@ -93,3 +93,6 @@ router.put("/:id", verificarToken, editar);
 router.delete("/:id", verificarToken, eliminar);
 
 export default router;
+
+
+//backend probado y funcionando correctamente
