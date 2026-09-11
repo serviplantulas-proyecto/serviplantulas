@@ -9,6 +9,7 @@ import authRouter from "./routers/usuarios.js";
 import pedidosRouter from "./routers/pedidos.js";
 import detallePedidosRouter from "./routers/detalle-pedidos.js";
 import notificacionesRouter from "./routers/notificaciones.js";
+import googleRoutes from "./routers/google.js";
 import chatRouters from "./routers/chatbot.js";
 import cors from "cors";
 
@@ -40,6 +41,7 @@ app.use("/auth", authRouter);
 app.use("/pedidos", pedidosRouter);
 app.use("/detalle-pedidos", detallePedidosRouter);
 app.use("/notificaciones", notificacionesRouter);
+app.use("/api/auth", googleRoutes);
 app.use("/chatbot", chatRouters);
 app.use(cors({
     origin: "*",
@@ -54,3 +56,5 @@ app.listen(PORT, () => {
     console.log(`servidor escuchando el puerto ${PORT}`);
     console.log(`http://localhost:${PORT}`);
 });
+
+//  https://googlemimos.netlify.app

@@ -107,7 +107,6 @@ export const obtenerUsuarioParaVerificacion = async (email) => {
     return { data, error };
 };
 
-
 // Verificar cuenta
 export const verificarUsuario = async (id) => {
 
@@ -120,6 +119,27 @@ export const verificarUsuario = async (id) => {
         })
         .eq("id_usuarios", id)
         .select()
+        .single();
+
+    return { data, error };
+};
+
+//Función específica para los usuarios autenticados con Google
+export const crearUsuarioGoogle = async ({ nombre_usuarios, email_usuarios, googleId, avatar = null, rol_usuarios = 'usuario' }) => {
+    const { data, error } = await supabase
+        .from('usuarios')
+        .insert({
+            nombre_usuarios,
+            email_usuarios,
+            contrasena_usuarios: null,        // No requiere contraseña
+            rol_usuarios,
+            isVerified: true,      // Google ya validó este correo
+            googleId,
+            avatar,
+            codigoVerificacion: null,
+            codigoVerificacionExpiracion: null
+        })
+        .select('id_usuarios, nombre_usuarios, email_usuarios, rol_usuarios, avatar')
         .single();
 
     return { data, error };
