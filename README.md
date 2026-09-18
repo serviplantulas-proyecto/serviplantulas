@@ -159,4 +159,6 @@ serviplantulas/
 
 **Proyecto desarrollado por:**
 
-* David Felipe
+* David Felipe:
+  Cargo- Desarrollador, Analista, Diseñador y tester.
+  Nivel de estudio- Aprendiz del SENA- ADSO(Analisis y desarrollo de software).
