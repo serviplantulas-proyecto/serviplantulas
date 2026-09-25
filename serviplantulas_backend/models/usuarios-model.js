@@ -123,24 +123,3 @@ export const verificarUsuario = async (id) => {
 
     return { data, error };
 };
-
-//Función específica para los usuarios autenticados con Google
-export const crearUsuarioGoogle = async ({ nombre_usuarios, email_usuarios, googleId, avatar = null, rol_usuarios = 'usuario' }) => {
-    const { data, error } = await supabase
-        .from('usuarios')
-        .insert({
-            nombre_usuarios,
-            email_usuarios,
-            contrasena_usuarios: null,        // No requiere contraseña
-            rol_usuarios,
-            isVerified: true,      // Google ya validó este correo
-            googleId,
-            avatar,
-            codigoVerificacion: null,
-            codigoVerificacionExpiracion: null
-        })
-        .select('id_usuarios, nombre_usuarios, email_usuarios, rol_usuarios, avatar')
-        .single();
-
-    return { data, error };
-};
