@@ -57,4 +57,5 @@ app.listen(PORT, () => {
     console.log(`http://localhost:${PORT}`);
 });
 
-//  https://googlemimos.netlify.app
+//  link de google: https://googlemimos.netlify.app
+//  link de brevo:  https://verificacionuser.netlify.app/

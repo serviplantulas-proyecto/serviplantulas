@@ -125,43 +125,35 @@ export const forgotPassword = async (req, res) => {
                     <p>
                         Hola ${usuario.nombre_usuarios || "usuario"}.
                     </p>
-
                     <p>
                         Hemos recibido una solicitud para
                         recuperar tu contraseña.
                     </p>
-
                     <p>
                         Tu código de recuperación es:
                     </p>
-
                     <h1 style="
                         letter-spacing: 8px;
                         text-align: center;
                     ">
                         ${codigo}
                     </h1>
-
                     <p>
                         Este código expirará en
                         <strong>15 minutos</strong>.
                     </p>
-
                     <p>
                         Si no solicitaste este cambio,
                         puedes ignorar este mensaje.
                     </p>
-
                     <p>
                         <strong>
                             No compartas este código con nadie.
                         </strong>
                     </p>
-
                     <p>
                         Serviplántulas 🌱
                     </p>
-
                 </div>
 
             `
@@ -196,9 +188,7 @@ export const forgotPassword = async (req, res) => {
 };
 
 
-// ==========================================
 // VERIFICAR CÓDIGO Y CAMBIAR CONTRASEÑA
-// ==========================================
 
 export const verifyCode = async (req, res) => {
 

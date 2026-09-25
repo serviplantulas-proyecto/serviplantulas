@@ -1,7 +1,6 @@
 import express from "express";
 
 import {
-    registro,
     login,
     verificarCuenta
 } from "../controllers/usuario-controller.js";
@@ -13,31 +12,6 @@ import {
 
 const router = express.Router();
 
-
-// ============================================================
-// AUTENTICACIÓN
-// ============================================================
-
-
-// POST - Registrar usuario
-// URL: http://localhost:3000/auth/register
-// Body: JSON
-//
-// {
-//     "nombre_usuarios": "Juan",
-//     "apellido_usuarios": "Pérez",
-//     "telefono_usuarios": "3001234567",
-//     "email_usuarios": "juan@gmail.com",
-//     "contrasena_usuarios": "123456"
-// }
-//
-// El rol se asigna automáticamente como "usuario".
-// La cuenta queda inicialmente sin verificar.
-// Se genera automáticamente un código de verificación
-// de 6 dígitos y se envía al correo mediante Brevo.
-// El código tiene una duración de 15 minutos.
-
-router.post("/register", registro);
 
 
 // POST - Iniciar sesión
