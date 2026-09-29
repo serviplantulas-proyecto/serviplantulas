@@ -32,7 +32,7 @@ export const chatearConServiplantulas = async (req, res) => {
 
         // 2. Armar catalogo para la IA
         const catalogoTexto = productos.map(p =>
-            `- **${p.nombre}**: $${Number(p.precio).toLocaleString("es-CO")} COP | Descripcion: ${p.descripcion}`
+            `- **${p.nombre_producto}**: $${Number(p.precio_producto).toLocaleString("es-CO")} COP | Descripcion: ${p.descripcion_producto}`
         ).join("\n");
 
         const systemPrompt = `
@@ -49,6 +49,7 @@ REGLAS DE ATENCION:
 3. Especifica los valores siempre en pesos colombianos ($ COP).
 4. Se conciso y completa tus oraciones.
 5. si hay algo que no puedes hacer, dile ruta que debe de seguir en la aplicacion para que el mismo lo pueda hacer.
+6. todas las respuestas tienen que estar relacionadas con la empresa, en este caso es venta de plantas y analisis, no puedes responder cosas que no esten relacionadas con SERVIPLANTULAS, ejemplo geografia, politica, etc. si te preguntan por ejemplo de matematicas asegurate que sean sobre SERVIPLANTULAS, ejemplo(si en 20 dias, en todos ellos vendo 24 palitos de arbustos y estan a 12000 cada uno, cuanto ganare al final), eso es un problema de matematicas normalmente no lo deberias responder pero recuerda si tiene que ver con SERVIPLANTULAS(sus ventas, sus productos, sus precios, sus compras, etc) se puede responder
 `;
 
         // 3. Inferencia con Groq

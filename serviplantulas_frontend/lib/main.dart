@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:serviplantulas_frontend/pantallas/login.dart';
+import 'package:serviplantulas_frontend/pantallas/menu_page.dart';
+import 'styles/app_theme.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,6 +11,11 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: Scaffold(body: Login()));
+    return MaterialApp(
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(body: MenuPage()));
   }
 }
+
+//pagina para los iconos |°/- flaticon -\°|
