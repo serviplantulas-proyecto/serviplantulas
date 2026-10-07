@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../colores/app_colors.dart';
-import '../../colores/app_radius.dart';
+import '../../styles/app_colors.dart';
+import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
 
 enum AppButtonType {

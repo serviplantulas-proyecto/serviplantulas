@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:serviplantulas_frontend/pantallas/login.dart';
 import 'package:serviplantulas_frontend/pantallas/menu_page.dart';
+import 'package:serviplantulas_frontend/pantallas/registro.dart';
 import 'styles/app_theme.dart';
 
 void main() {
@@ -14,8 +16,10 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: MenuPage()));
+      home: Scaffold(body: LoginPage()));
   }
 }
 
-//pagina para los iconos |°/- flaticon -\°|
+//pagina para los iconos |°/- https://www.flaticon.es/ -\°|
+//pagina para convertir formato imagen a SVG |°/- https://www.autotracer.org/ -\°|
+//comando para iniciar con opera |°/- $env:CHROME_EXECUTABLE="C:\Users\FINISTERRA\AppData\Local\Programs\Opera GX\opera.exe" -\°|

@@ -28,7 +28,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -38,7 +38,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -48,7 +48,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -58,7 +58,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -68,7 +68,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -78,7 +78,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -88,7 +88,7 @@ class _MenuState extends State<Menu> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Login()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),

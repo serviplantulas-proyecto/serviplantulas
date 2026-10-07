@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../colores/app_colors.dart';
-import '../colores/app_radius.dart';
+import '../styles/app_colors.dart';
+import '../styles/app_radius.dart';
 import '../styles/app_text_styles.dart';
 
 class AppTextField extends StatelessWidget {
@@ -23,6 +23,7 @@ class AppTextField extends StatelessWidget {
     this.hint,
     this.controller,
     this.keyboardType = TextInputType.text,
+    
     this.obscureText = false,
     this.enabled = true,
     this.prefixIcon,
