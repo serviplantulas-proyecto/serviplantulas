@@ -9,6 +9,7 @@ import '../componentes/login/login_forgot_password.dart';
 import '../componentes/login/login_register.dart';
 import '../componentes/login/login_google_button.dart';
 import '../componentes/login/login_footer.dart';
+import 'solicitar_codigo_page.dart';
 import '../styles/app_spacing.dart';
 
 class LoginPage extends StatefulWidget {
@@ -39,7 +40,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _recuperarContrasena() {
-    // Aquí conectaremos posteriormente la recuperación de contraseña.
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SolicitarCodigoPage(),
+      ),
+    );
   }
 
   void _registrarse() {

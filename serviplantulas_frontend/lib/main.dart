@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:serviplantulas_frontend/pantallas/login.dart';
-import 'package:serviplantulas_frontend/pantallas/menu_page.dart';
-import 'package:serviplantulas_frontend/pantallas/registro.dart';
 import 'styles/app_theme.dart';
 
 void main() {
@@ -16,7 +14,8 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: LoginPage()));
+      home: const LoginPage(),
+    );
   }
 }
 

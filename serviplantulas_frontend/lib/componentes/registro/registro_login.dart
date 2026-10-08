@@ -27,7 +27,7 @@ class RegistroLogin extends StatelessWidget {
           child: Text(
             'Iniciar sesión',
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.info,
+              color: AppColors.accent,
               fontWeight: FontWeight.w600,
             ),
           ),
