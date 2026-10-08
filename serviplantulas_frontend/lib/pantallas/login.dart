@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:serviplantulas_frontend/pantallas/registro.dart';
 
+import '../services/auth_service.dart';
 import '../componentes/login/login_logo.dart';
 import '../componentes/login/login_email_field.dart';
 import '../componentes/login/login_password_field.dart';
@@ -10,6 +11,7 @@ import '../componentes/login/login_register.dart';
 import '../componentes/login/login_google_button.dart';
 import '../componentes/login/login_footer.dart';
 import 'solicitar_codigo_page.dart';
+import 'menu_page.dart';
 import '../styles/app_spacing.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,6 +22,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController =
       TextEditingController();
 
@@ -35,8 +38,35 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _iniciarSesion() {
-    // Aquí conectaremos posteriormente el backend.
+  Future<void> _iniciarSesion() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.iniciarSesion(
+        email: _emailController.text.trim(),
+        contrasena: _passwordController.text,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MenuPage()),
+      );
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Error inesperado al iniciar sesión: $error\n$stackTrace');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ocurrió un error al iniciar sesión. Inténtalo de nuevo.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _recuperarContrasena() {
@@ -75,9 +105,11 @@ class _LoginPageState extends State<LoginPage> {
               constraints: const BoxConstraints(
                 maxWidth: 354,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   const LoginLogo(),
 
                   const SizedBox(
@@ -86,6 +118,15 @@ class _LoginPageState extends State<LoginPage> {
 
                   LoginEmailField(
                     controller: _emailController,
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      if (email.isEmpty) return 'Ingresa tu correo electrónico';
+                      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                          .hasMatch(email)) {
+                        return 'Ingresa un correo electrónico válido';
+                      }
+                      return null;
+                    },
                   ),
 
                   const SizedBox(
@@ -94,6 +135,12 @@ class _LoginPageState extends State<LoginPage> {
 
                   LoginPasswordField(
                     controller: _passwordController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Ingresa tu contraseña';
+                      }
+                      return null;
+                    },
                   ),
 
                   const SizedBox(
@@ -137,7 +184,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
 
                   const LoginFooter(),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

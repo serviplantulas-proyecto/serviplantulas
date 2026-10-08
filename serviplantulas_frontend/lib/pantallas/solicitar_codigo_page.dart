@@ -88,7 +88,7 @@ class _SolicitarCodigoPageState extends State<SolicitarCodigoPage> {
                 const RecuperarHeader(
                   title: 'Solicitar código de verificación',
                   subtitle:
-                      'Ingresa tu correo institucional registrado para enviarte un código de seguridad de 6 dígitos.',
+                      'Ingresa tu correo registrado para enviarte un código de seguridad de 6 dígitos.',
                 ),
                 const SizedBox(height: 24),
                 RecuperarEmailField(

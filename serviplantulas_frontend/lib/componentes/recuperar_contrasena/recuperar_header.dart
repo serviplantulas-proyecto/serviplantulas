@@ -5,11 +5,13 @@ import '../../styles/app_text_styles.dart';
 class RecuperarHeader extends StatelessWidget {
   final String title;
   final String subtitle;
+  final double? titleFontSize;
 
   const RecuperarHeader({
     super.key,
     required this.title,
     required this.subtitle,
+    this.titleFontSize,
   });
 
   @override
@@ -21,6 +23,7 @@ class RecuperarHeader extends StatelessWidget {
           title,
           style: AppTextStyles.titleMedium.copyWith(
             color: AppColors.primary,
+            fontSize: titleFontSize,
           ),
         ),
         const SizedBox(height: 8),

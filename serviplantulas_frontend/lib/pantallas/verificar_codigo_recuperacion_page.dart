@@ -10,10 +10,7 @@ import '../styles/app_text_styles.dart';
 class VerificarCodigoRecuperacionPage extends StatefulWidget {
   final String email;
 
-  const VerificarCodigoRecuperacionPage({
-    super.key,
-    required this.email,
-  });
+  const VerificarCodigoRecuperacionPage({super.key, required this.email});
 
   @override
   State<VerificarCodigoRecuperacionPage> createState() =>
@@ -92,9 +89,7 @@ class _VerificarCodigoRecuperacionPageState
         ),
         title: Text(
           'Recuperar Acceso',
-          style: AppTextStyles.titleSmall.copyWith(
-            color: AppColors.primary,
-          ),
+          style: AppTextStyles.titleSmall.copyWith(color: AppColors.primary),
         ),
       ),
       body: SafeArea(
@@ -114,8 +109,8 @@ class _VerificarCodigoRecuperacionPageState
                 const RecuperarHeader(
                   title: 'Ingresa el código y una nueva contraseña',
                   subtitle: '',
+                  titleFontSize: 14,
                 ),
-                const SizedBox(height: 20),
                 RecuperarCodeInput(
                   onChanged: (code) => setState(() => _code = code),
                 ),
@@ -149,7 +144,7 @@ class _VerificarCodigoRecuperacionPageState
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
                 RecuperarButton(
                   text: 'Confirmar Cambio',
                   backgroundColor: AppColors.accent,
