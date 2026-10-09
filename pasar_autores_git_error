@@ -1,0 +1,63 @@
+hola, mira es que cada commit que subo se esta subiendo con las credenciales de otra persona, es que estoy en un computador de estudio, y pues aqui se reunen 3 grupos en diferentes horarios y pues se sube con la de otra persona y necesito que se suba con las mias
+
+
+
+
+
+Puedes cambiarlo manualmente desde la carpeta del proyecto:
+
+```bash
+git config --local user.name "serviplantulas-proyecto"
+git config --local user.email "serviplantulas@gmail.com"
+```
+
+`--local` limita el cambio a este repositorio. Para comprobarlo:
+
+```bash
+git config --local --get user.name
+git config --local --get user.email
+```
+
+Si quieres usar otro autor **solo en un commit**, puedes especificarlo al crearlo:
+
+```bash
+git -c user.name="Tu nombre" -c user.email="tu-correo@ejemplo.com" commit -m "Mensaje del commit"
+```
+
+Si el commit más reciente quedó con autor incorrecto, primero configura el nombre y correo correctos como arriba y luego ejecuta:
+
+```bash
+git commit --amend --reset-author --no-edit
+```
+
+Eso reemplaza el último commit. Si ya lo habías subido, cambiarlo modifica el historial; coordínalo con el grupo antes de volver a subirlo. Y recuerda: el nombre y correo definen la autoría del commit; la cuenta con la que GitHub autentica la subida es una configuración aparte.
+
+
+
+
+
+
+
+se puede modificar el autor de commits anteriores?
+
+
+Sí. Puedes cambiar el autor de commits anteriores reescribiendo el historial. Para corregir **un commit específico**:
+
+1. Ubica el commit y copia su hash:
+   ```bash
+   git log --oneline
+   ```
+2. Inicia una rebase interactiva desde el padre de ese commit:
+   ```bash
+   git rebase -i <hash>^
+   ```
+3. En el editor, cambia `pick` por `edit` en la línea de ese commit y guarda.
+4. Cuando Git se detenga, ejecuta:
+   ```bash
+   git commit --amend --author="serviplantulas-proyecto <serviplantulas@gmail.com>" --no-edit
+   git rebase --continue
+   ```
+
+Si corriges varios commits, marca `edit` en cada uno; Git se detendrá para que actualices cada autor.
+
+**Importante:** esto cambia los hashes de los commits. Si ya estaban subidos, tendrás que actualizar la rama remota con `git push --force-with-lease`; como es una rama compartida, coordínalo con los otros grupos antes para no sobrescribir cambios ajenos.
