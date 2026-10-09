@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'verificar_cuenta.dart';
+import '../services/auth_service.dart';
 import '../componentes/registro/registro_header.dart';
 import '../componentes/registro/registro_nombre_field.dart';
 import '../componentes/registro/registro_email_field.dart';
@@ -34,6 +37,60 @@ class _RegistroPageState extends State<RegistroPage> {
 
   bool _isLoading = false;
 
+  Future<void> _crearCuenta() async {
+    final nombreCompleto = _nombreController.text.trim();
+    final partesNombre = nombreCompleto.split(RegExp(r'\s+'));
+    final email = _emailController.text.trim().toLowerCase();
+    final telefono = _contactoController.text.trim();
+    final digitosTelefono = telefono.replaceAll(RegExp(r'\D'), '').length;
+    final contrasena = _passwordController.text;
+
+    String? error;
+    if (nombreCompleto.isEmpty || partesNombre.length < 2) {
+      error = 'Ingresa tu nombre y apellido.';
+    } else if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      error = 'Ingresa un correo electrónico válido.';
+    } else if (digitosTelefono < 7 || digitosTelefono > 15) {
+      error = 'Ingresa un número de contacto válido.';
+    } else if (contrasena.length < 8) {
+      error = 'La contraseña debe tener al menos 8 caracteres.';
+    } else if (contrasena != _confirmPasswordController.text) {
+      error = 'Las contraseñas no coinciden.';
+    }
+
+    if (error != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.registrarCuenta(
+        nombre: partesNombre.first,
+        apellido: partesNombre.skip(1).join(' '),
+        telefono: telefono,
+        email: email,
+        contrasena: contrasena,
+      );
+      if (!mounted) return;
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => VerificarCuentaPage(email: email)),
+        ),
+      );
+    } on AuthException catch (exception) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(exception.message)));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   void dispose() {
     _nombreController.dispose();
@@ -42,16 +99,6 @@ class _RegistroPageState extends State<RegistroPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  void _crearCuenta() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            VerificarCuentaPage(email: _emailController.text.trim()),
-      ),
-    );
   }
 
   void _irAlLogin() {

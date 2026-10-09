@@ -95,6 +95,23 @@ El servidor se ejecuta en:
 http://localhost:3000
 ```
 
+### Registro y verificación de cuentas
+
+El frontend crea la cuenta mediante `POST /auth/register`. El backend guarda la
+contraseña cifrada y envía un código de seis dígitos al correo; la cuenta debe
+verificarse antes de iniciar sesión.
+
+- `POST /auth/register`: recibe `nombre_usuarios`, `apellido_usuarios`,
+  `telefono_usuarios`, `email_usuarios` y `contrasena_usuarios`.
+- `POST /auth/verify-account`: recibe `email_usuarios` y `codigo`.
+- `POST /auth/resend-verification`: recibe `email_usuarios` para generar y
+  enviar otro código.
+
+Para enviar los códigos, configura en el `.env` del backend las variables
+`BREVO_API_KEY` y `EMAIL_USER`. Opcionalmente, configura `EMAIL_FROM_NAME`
+para definir el nombre del remitente. No publiques los valores de estas
+variables.
+
 ## 6. Estructura del proyecto
 
 La estructura principal del backend está organizada de la siguiente manera:

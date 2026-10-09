@@ -4,6 +4,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class ApiConfig {
   static String get loginUrl => '${_apiHost}auth/login';
 
+  static String get registerUrl => '${_apiHost}auth/register';
+
+  static String get verifyAccountUrl => '${_apiHost}auth/verify-account';
+
+  static String get resendVerificationUrl =>
+      '${_apiHost}auth/resend-verification';
+
   static String get baseUrl => '${_apiHost}chatbot/';
 
   static String get _apiHost {

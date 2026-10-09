@@ -18,20 +18,18 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  static Future<void> iniciarSesion({
-    required String email,
-    required String contrasena,
+  static Future<Map<String, dynamic>> _postAuth({
+    required String url,
+    required Map<String, Object?> body,
+    required String fallbackMessage,
   }) async {
     late final http.Response response;
     try {
       response = await http
           .post(
-            Uri.parse(ApiConfig.loginUrl),
+            Uri.parse(url),
             headers: ApiConfig.headers,
-            body: jsonEncode({
-              'email_usuarios': email,
-              'contrasena_usuarios': contrasena,
-            }),
+            body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 15));
     } on SocketException {
@@ -56,18 +54,74 @@ class AuthService {
         'El servidor devolvió una respuesta no válida.',
       );
     }
+
     if (decoded is! Map<String, dynamic>) {
       throw const AuthException('El servidor devolvió una respuesta no válida.');
     }
 
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       final error = decoded['error'];
       throw AuthException(
-        error is String && error.isNotEmpty
-            ? error
-            : 'No fue posible iniciar sesión. Inténtalo de nuevo.',
+        error is String && error.isNotEmpty ? error : fallbackMessage,
       );
     }
+
+    return decoded;
+  }
+
+  static Future<void> registrarCuenta({
+    required String nombre,
+    required String apellido,
+    required String telefono,
+    required String email,
+    required String contrasena,
+  }) async {
+    await _postAuth(
+      url: ApiConfig.registerUrl,
+      body: {
+        'nombre_usuarios': nombre,
+        'apellido_usuarios': apellido,
+        'telefono_usuarios': telefono,
+        'email_usuarios': email,
+        'contrasena_usuarios': contrasena,
+      },
+      fallbackMessage: 'No fue posible crear la cuenta. Inténtalo de nuevo.',
+    );
+  }
+
+  static Future<void> verificarCuenta({
+    required String email,
+    required String codigo,
+  }) async {
+    await _postAuth(
+      url: ApiConfig.verifyAccountUrl,
+      body: {'email_usuarios': email, 'codigo': codigo},
+      fallbackMessage: 'No fue posible verificar la cuenta.',
+    );
+  }
+
+  static Future<void> reenviarCodigoVerificacion({
+    required String email,
+  }) async {
+    await _postAuth(
+      url: ApiConfig.resendVerificationUrl,
+      body: {'email_usuarios': email},
+      fallbackMessage: 'No fue posible enviar un nuevo código.',
+    );
+  }
+
+  static Future<void> iniciarSesion({
+    required String email,
+    required String contrasena,
+  }) async {
+    final decoded = await _postAuth(
+      url: ApiConfig.loginUrl,
+      body: {
+        'email_usuarios': email,
+        'contrasena_usuarios': contrasena,
+      },
+      fallbackMessage: 'No fue posible iniciar sesión. Inténtalo de nuevo.',
+    );
 
     final token = decoded['token'];
     if (token is! String || token.isEmpty) {

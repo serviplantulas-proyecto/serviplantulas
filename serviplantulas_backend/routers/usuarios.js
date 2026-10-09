@@ -2,7 +2,9 @@ import express from "express";
 
 import {
     login,
-    verificarCuenta
+    registrarUsuario,
+    verificarCuenta,
+    reenviarCodigoVerificacion
 } from "../controllers/usuario-controller.js";
 
 import {
@@ -12,7 +14,8 @@ import {
 
 const router = express.Router();
 
-
+// POST - Registrar usuario y enviar código de verificación
+router.post("/register", registrarUsuario);
 
 // POST - Iniciar sesión
 // URL: http://localhost:3000/auth/login
@@ -45,6 +48,8 @@ router.post("/login", login);
 
 router.post("/verify-account", verificarCuenta);
 
+// POST - Volver a enviar el código de verificación
+router.post("/resend-verification", reenviarCodigoVerificacion);
 
 // POST - Solicitar recuperación de contraseña
 // URL: http://localhost:3000/auth/forgot-password

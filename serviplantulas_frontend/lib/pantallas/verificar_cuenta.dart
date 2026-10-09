@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/auth_service.dart';
 import '../componentes/verificacion_de_cuenta/verificacion_cuenta_header.dart';
 import '../componentes/verificacion_de_cuenta/verificacion_cuenta_badge.dart';
 import '../componentes/verificacion_de_cuenta/verificacion_cuenta_icon.dart';
@@ -26,14 +27,63 @@ class VerificarCuentaPage extends StatefulWidget {
 }
 
 class _VerificarCuentaPageState extends State<VerificarCuentaPage> {
+  final TextEditingController _codigoController = TextEditingController();
   bool _isLoading = false;
+  bool _isResending = false;
 
-  void _verificarCuenta() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
+  @override
+  void dispose() {
+    _codigoController.dispose();
+    super.dispose();
   }
 
-  void _volverASolicitar() {
-    // Aquí conectaremos posteriormente el reenvío del código.
+  Future<void> _verificarCuenta() async {
+    final codigo = _codigoController.text.trim();
+    if (codigo.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa el código completo de 6 dígitos.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.verificarCuenta(email: widget.email, codigo: codigo);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cuenta verificada. Ya puedes iniciar sesión.'),
+        ),
+      );
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on AuthException catch (exception) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(exception.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _volverASolicitar() async {
+    if (_isResending || _isLoading) return;
+
+    setState(() => _isResending = true);
+    try {
+      await AuthService.reenviarCodigoVerificacion(email: widget.email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Te enviamos un nuevo código.')),
+      );
+    } on AuthException catch (exception) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(exception.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
   }
 
   @override
@@ -83,7 +133,7 @@ class _VerificarCuentaPageState extends State<VerificarCuentaPage> {
                       height: AppSpacing.extraLarge,
                     ),
 
-                    const VerificacionCuentaCode(),
+                    VerificacionCuentaCode(controller: _codigoController),
 
                     const SizedBox(
                       height: AppSpacing.small,
@@ -108,7 +158,9 @@ class _VerificarCuentaPageState extends State<VerificarCuentaPage> {
                     ),
 
                     VerificacionCuentaResend(
-                      onResend: _volverASolicitar,
+                      onResend: _isResending || _isLoading
+                          ? null
+                          : _volverASolicitar,
                     ),
                   ],
                 ),
