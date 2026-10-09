@@ -22,3 +22,7 @@ class MainApp extends StatelessWidget {
 //pagina para los iconos |°/- https://www.flaticon.es/ -\°|
 //pagina para convertir formato imagen a SVG |°/- https://www.autotracer.org/ -\°|
 //comando para iniciar con opera |°/- $env:CHROME_EXECUTABLE="C:\Users\FINISTERRA\AppData\Local\Programs\Opera GX\opera.exe" -\°|
+//guia del panel administrativo  |°/- https://jlombanar.github.io/adso_3169657/ -\°|
+
+
+//pantallas para reducir(sacar widgets): registrar_producto_page.dart y detalle_producto_page.dart
