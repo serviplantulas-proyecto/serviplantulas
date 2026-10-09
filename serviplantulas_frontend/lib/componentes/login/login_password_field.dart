@@ -6,19 +6,19 @@ import '../../styles/app_text_styles.dart';
 
 class LoginPasswordField extends StatefulWidget {
   final TextEditingController controller;
-  final FormFieldValidator<String>? validator;
 
   const LoginPasswordField({
     super.key,
     required this.controller,
-    this.validator,
   });
 
   @override
-  State<LoginPasswordField> createState() => _LoginPasswordFieldState();
+  State<LoginPasswordField> createState() =>
+      _LoginPasswordFieldState();
 }
 
-class _LoginPasswordFieldState extends State<LoginPasswordField> {
+class _LoginPasswordFieldState
+    extends State<LoginPasswordField> {
   bool _obscurePassword = true;
 
   @override
@@ -26,7 +26,6 @@ class _LoginPasswordFieldState extends State<LoginPasswordField> {
     return TextFormField(
       controller: widget.controller,
       obscureText: _obscurePassword,
-      validator: widget.validator,
       style: AppTextStyles.bodyMedium,
       decoration: InputDecoration(
         labelText: 'Contraseña',
@@ -57,16 +56,29 @@ class _LoginPasswordFieldState extends State<LoginPasswordField> {
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(
+            AppRadius.medium,
+          ),
+          borderSide: BorderSide(
+            color: AppColors.border,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(
+            AppRadius.medium,
+          ),
+          borderSide: BorderSide(
+            color: AppColors.border,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(
+            AppRadius.medium,
+          ),
+          borderSide: BorderSide(
+            color: AppColors.primary,
+            width: 1.5,
+          ),
         ),
       ),
     );
