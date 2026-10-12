@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/chat_plantulas_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 
@@ -13,6 +14,8 @@ class ChatEvaPage extends StatefulWidget {
 class _ChatEvaPageState extends State<ChatEvaPage> {
   final _controller = TextEditingController();
   final _scrollCtrl = ScrollController();
+  final _sesionId = 'serviplantulas_${DateTime.now().millisecondsSinceEpoch}';
+  bool _cargando = false;
 
   final List<_Msg> _mensajes = [
     _Msg(
@@ -28,29 +31,50 @@ class _ChatEvaPageState extends State<ChatEvaPage> {
     super.dispose();
   }
 
-  void _enviar() {
+  Future<void> _enviar() async {
     final texto = _controller.text.trim();
-    if (texto.isEmpty) return;
+    if (texto.isEmpty || _cargando) return;
+
     setState(() {
       _mensajes.add(_Msg(texto, true));
       _controller.clear();
+      _cargando = true;
     });
-    // TODO: conectar con chat_plantulas_service / backend EVA
-    Future.delayed(const Duration(milliseconds: 600), () {
+
+    _scrollHaciaAbajo();
+    try {
+      final respuesta = await ChatEvaService.enviarMensaje(
+        texto,
+        sesionId: _sesionId,
+      );
       if (!mounted) return;
       setState(() {
-        _mensajes.add(
-          _Msg(
-            'Recibí tu mensaje. Cuando el backend esté conectado responderé con datos reales del inventario y ventas.',
-            false,
-          ),
-        );
+        _mensajes.add(_Msg(respuesta, false));
       });
-      _scrollCtrl.animateTo(
-        _scrollCtrl.position.maxScrollExtent + 80,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+    } on ChatException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _mensajes.add(_Msg(error.message, false));
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _cargando = false;
+        });
+        _scrollHaciaAbajo();
+      }
+    }
+  }
+
+  void _scrollHaciaAbajo() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -66,10 +90,22 @@ class _ChatEvaPageState extends State<ChatEvaPage> {
               child: ListView.builder(
                 controller: _scrollCtrl,
                 padding: const EdgeInsets.all(16),
-                itemCount: _mensajes.length,
+                itemCount: _mensajes.length + (_cargando ? 1 : 0),
                 itemBuilder: (context, i) {
+                  if (_cargando && i == _mensajes.length) {
+                    return const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
                   final m = _mensajes[i];
-                  // Reutiliza ChatBurbuja si existe; fallback simple
                   return Align(
                     alignment: m.esUsuario
                         ? Alignment.centerRight
@@ -172,6 +208,7 @@ class _ChatEvaPageState extends State<ChatEvaPage> {
           Expanded(
             child: TextField(
               controller: _controller,
+              enabled: !_cargando,
               style: AppTextStyles.bodyMedium,
               decoration: InputDecoration(
                 hintText: 'Escribe un mensaje...',
@@ -194,9 +231,9 @@ class _ChatEvaPageState extends State<ChatEvaPage> {
           ),
           const SizedBox(width: 8),
           CircleAvatar(
-            backgroundColor: AppColors.primary,
+            backgroundColor: _cargando ? AppColors.textMuted : AppColors.primary,
             child: IconButton(
-              onPressed: _enviar,
+              onPressed: _cargando ? null : _enviar,
               icon: const Icon(Icons.send, size: 18, color: Colors.white),
             ),
           ),

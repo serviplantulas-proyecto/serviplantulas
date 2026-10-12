@@ -11,7 +11,7 @@ class ApiConfig {
   static String get resendVerificationUrl =>
       '${_apiHost}auth/resend-verification';
 
-  static String get baseUrl => '${_apiHost}chatbot/';
+  static String get chatbotUrl => '${_apiHost}chatbot/';
 
   static String get _apiHost {
     if (kIsWeb) {

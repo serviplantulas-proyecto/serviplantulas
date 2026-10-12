@@ -14,15 +14,18 @@ class ChatMimosModal extends StatefulWidget {
 class _ChatMimosModalState extends State<ChatMimosModal> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final String _sesionId =
+      'serviplantulas_${DateTime.now().millisecondsSinceEpoch}';
   final List<Map<String, String>> _mensajes = [
     {
       'role': 'bot',
-      'text': 'Hola! Bienvenido a Serviplantulas. En que le puedo ayudar en dia de hoy?',
-    }
+      'text':
+          'Hola! Bienvenido a Serviplantulas. En que le puedo ayudar en dia de hoy?',
+    },
   ];
   bool _cargando = false;
 
-  void _enviarMensaje() async {
+  Future<void> _enviarMensaje() async {
     final texto = _controller.text.trim();
     if (texto.isEmpty || _cargando) return;
 
@@ -34,14 +37,28 @@ class _ChatMimosModalState extends State<ChatMimosModal> {
 
     _scrollHaciaAbajo();
 
-    final respuesta = await ChatMimosService.enviarMensaje(texto);
-
-    if (mounted) {
+    try {
+      final respuesta = await ChatEvaService.enviarMensaje(
+        texto,
+        sesionId: _sesionId,
+      );
+      if (!mounted) return;
       setState(() {
         _mensajes.add({'role': 'bot', 'text': respuesta});
-        _cargando = false;
       });
       _scrollHaciaAbajo();
+    } on ChatException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _mensajes.add({'role': 'bot', 'text': error.message});
+      });
+      _scrollHaciaAbajo();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _cargando = false;
+        });
+      }
     }
   }
 
@@ -100,10 +117,16 @@ class _ChatMimosModalState extends State<ChatMimosModal> {
                   SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE91E63)),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFFE91E63),
+                    ),
                   ),
                   SizedBox(width: 8),
-                  Text('El asesor esta respondiendo...', style: TextStyle(color: Colors.black45, fontSize: 12)),
+                  Text(
+                    'El asesor esta respondiendo...',
+                    style: TextStyle(color: Colors.black45, fontSize: 12),
+                  ),
                 ],
               ),
             ),
