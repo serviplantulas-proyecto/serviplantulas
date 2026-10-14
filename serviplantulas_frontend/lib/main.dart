@@ -25,4 +25,8 @@ class MainApp extends StatelessWidget {
 //guia del panel administrativo  |°/- https://jlombanar.github.io/adso_3169657/ -\°|
 
 
-//pantallas para reducir(sacar widgets): registrar_producto_page.dart, detalle_producto_page.dart, analisis_ventas_page.dart, chat_eva_page.dart y mi_cuenta_page.dart
+//pantallas para reducir(sacar widgets): registrar_producto_page.dart, detalle_producto_page.dart, analisis_ventas_page.dart, chat_eva_page.dart y mi_cuenta_page.dart, verificar "editar planta" del frontend- inventario
+
+//configirar permisos y credenciales del github:
+//PS D:\Programacion\web-adso> git config --global user.name "serviplantulas-proyecto"            
+// PS D:\Programacion\web-adso> git config --global user.email "serviplantulas@gmail.com"

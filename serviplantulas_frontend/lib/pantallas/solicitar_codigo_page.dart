@@ -3,6 +3,7 @@ import '../componentes/recuperar_contrasena/recuperar_badge.dart';
 import '../componentes/recuperar_contrasena/recuperar_button.dart';
 import '../componentes/recuperar_contrasena/recuperar_email_field.dart';
 import '../componentes/recuperar_contrasena/recuperar_header.dart';
+import '../services/auth_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 import 'verificar_codigo_recuperacion_page.dart';
@@ -25,25 +26,31 @@ class _SolicitarCodigoPageState extends State<SolicitarCodigoPage> {
     super.dispose();
   }
 
-  void _submit() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      // Simulación de respuesta de backend / API
-      await Future.delayed(const Duration(seconds: 1));
-
+    final email = _emailController.text.trim();
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.solicitarRecuperacion(email: email);
       if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      // Navegación hacia el Paso 2 enviando el email
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Te enviamos el código de recuperación.')),
+      );
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => VerificarCodigoRecuperacionPage(
-            email: _emailController.text.trim(),
-          ),
+          builder: (context) =>
+              VerificarCodigoRecuperacionPage(email: email),
         ),
       );
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

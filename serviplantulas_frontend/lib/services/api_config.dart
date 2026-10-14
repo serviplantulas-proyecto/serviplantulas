@@ -11,6 +11,10 @@ class ApiConfig {
   static String get resendVerificationUrl =>
       '${_apiHost}auth/resend-verification';
 
+  static String get forgotPasswordUrl => '${_apiHost}auth/forgot-password';
+
+  static String get verifyRecoveryCodeUrl => '${_apiHost}auth/verify-code';
+
   static String get chatbotUrl => '${_apiHost}chatbot/';
 
   static String get _apiHost {

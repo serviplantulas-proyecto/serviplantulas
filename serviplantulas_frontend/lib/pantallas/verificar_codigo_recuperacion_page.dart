@@ -4,6 +4,7 @@ import '../componentes/recuperar_contrasena/recuperar_button.dart';
 import '../componentes/recuperar_contrasena/recuperar_code_input.dart';
 import '../componentes/recuperar_contrasena/recuperar_header.dart';
 import '../componentes/recuperar_contrasena/recuperar_password_field.dart';
+import '../services/auth_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 
@@ -33,7 +34,7 @@ class _VerificarCodigoRecuperacionPageState
     super.dispose();
   }
 
-  void _submitChange() async {
+  Future<void> _submitChange() async {
     if (_code.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -46,21 +47,28 @@ class _VerificarCodigoRecuperacionPageState
 
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
-
-      // TODO: Conectar con backend para enviar código y nueva contraseña
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      // Redirigir al Login o pantalla de éxito
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Contraseña actualizada correctamente'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      try {
+        await AuthService.cambiarContrasena(
+          email: widget.email,
+          codigo: _code,
+          nuevaContrasena: _newPasswordController.text,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contraseña actualizada correctamente'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } on AuthException catch (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 

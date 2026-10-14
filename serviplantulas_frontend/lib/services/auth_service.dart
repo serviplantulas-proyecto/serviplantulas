@@ -22,6 +22,7 @@ class AuthService {
     required String url,
     required Map<String, Object?> body,
     required String fallbackMessage,
+    Duration timeout = const Duration(seconds: 15),
   }) async {
     late final http.Response response;
     try {
@@ -31,7 +32,7 @@ class AuthService {
             headers: ApiConfig.headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(timeout);
     } on SocketException {
       throw const AuthException(
         'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.',
@@ -56,7 +57,9 @@ class AuthService {
     }
 
     if (decoded is! Map<String, dynamic>) {
-      throw const AuthException('El servidor devolvió una respuesta no válida.');
+      throw const AuthException(
+        'El servidor devolvió una respuesta no válida.',
+      );
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -110,16 +113,38 @@ class AuthService {
     );
   }
 
+  static Future<void> solicitarRecuperacion({required String email}) async {
+    await _postAuth(
+      url: ApiConfig.forgotPasswordUrl,
+      body: {'email': email},
+      fallbackMessage: 'No fue posible enviar el código de recuperación.',
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
+  static Future<void> cambiarContrasena({
+    required String email,
+    required String codigo,
+    required String nuevaContrasena,
+  }) async {
+    await _postAuth(
+      url: ApiConfig.verifyRecoveryCodeUrl,
+      body: {
+        'email': email,
+        'codigo': codigo,
+        'nuevaContrasena': nuevaContrasena,
+      },
+      fallbackMessage: 'No fue posible actualizar la contraseña.',
+    );
+  }
+
   static Future<void> iniciarSesion({
     required String email,
     required String contrasena,
   }) async {
     final decoded = await _postAuth(
       url: ApiConfig.loginUrl,
-      body: {
-        'email_usuarios': email,
-        'contrasena_usuarios': contrasena,
-      },
+      body: {'email_usuarios': email, 'contrasena_usuarios': contrasena},
       fallbackMessage: 'No fue posible iniciar sesión. Inténtalo de nuevo.',
     );
 
