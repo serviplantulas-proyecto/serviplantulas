@@ -135,6 +135,7 @@ class AuthService {
         'nuevaContrasena': nuevaContrasena,
       },
       fallbackMessage: 'No fue posible actualizar la contraseña.',
+      timeout: const Duration(seconds: 30),
     );
   }
 
