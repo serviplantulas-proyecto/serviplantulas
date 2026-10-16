@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../componentes/boton/app_button.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
-import '../componentes/compartidos/form_dropdown.dart';
-import '../componentes/compartidos/qty_stepper.dart';
+import '../componentes/registrar_producto/widgets.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
-import '../styles/app_text_styles.dart';
 
 class RegistrarProductoPage extends StatefulWidget {
   const RegistrarProductoPage({super.key});
@@ -81,10 +77,13 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label('Nombre del Producto'),
-                    _field(_nombreCtrl, 'Ej. Helecho Boston Maceta 10"'),
+                    ProductoCampoTexto(
+                      label: 'Nombre del Producto',
+                      controller: _nombreCtrl,
+                      hint: 'Ej. Helecho Boston Maceta 10"',
+                    ),
                     const SizedBox(height: AppSpacing.large),
-                    FormDropdown(
+                    ProductoDropdownField(
                       label: 'Categoría',
                       value: _categoria,
                       options: _categorias,
@@ -97,10 +96,10 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _label('Precio de Compra'),
-                              _field(
-                                _precioCompraCtrl,
-                                '\$0',
+                              ProductoCampoTexto(
+                                label: 'Precio de Compra',
+                                controller: _precioCompraCtrl,
+                                hint: '\$0',
                                 keyboard: TextInputType.number,
                               ),
                             ],
@@ -111,10 +110,10 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _label('Precio de Venta'),
-                              _field(
-                                _precioVentaCtrl,
-                                '\$0',
+                              ProductoCampoTexto(
+                                label: 'Precio de Venta',
+                                controller: _precioVentaCtrl,
+                                hint: '\$0',
                                 keyboard: TextInputType.number,
                               ),
                             ],
@@ -126,7 +125,7 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
                     Row(
                       children: [
                         Expanded(
-                          child: FormDropdown(
+                          child: ProductoDropdownField(
                             label: 'Unidad de Medida',
                             value: _unidad,
                             options: _unidades,
@@ -135,38 +134,29 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _label('Stock Inicial'),
-                              QtyStepper(
-                                value: _stockInicial,
-                                onChanged: (v) =>
-                                    setState(() => _stockInicial = v),
-                              ),
-                            ],
+                          child: ProductoCampoStock(
+                            value: _stockInicial,
+                            onChanged: (v) => setState(() => _stockInicial = v),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    FormDropdown(
+                    ProductoDropdownField(
                       label: 'Proveedor',
                       value: _proveedor,
                       options: _proveedores,
                       onChanged: (v) => setState(() => _proveedor = v),
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Descripción'),
-                    TextField(
+                    ProductoCampoTexto(
+                      label: 'Descripción',
                       controller: _descCtrl,
+                      hint: 'Descripción del producto...',
                       maxLines: 3,
-                      style: AppTextStyles.bodyMedium,
-                      decoration: _decoration('Descripción del producto...'),
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
-                    AppButton(
-                      text: 'Guardar Producto',
+                    ProductoBotonGuardar(
                       isLoading: _isLoading,
                       onPressed: _guardar,
                     ),
@@ -176,52 +166,6 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _label(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          t,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-
-  Widget _field(
-    TextEditingController ctrl,
-    String hint, {
-    TextInputType keyboard = TextInputType.text,
-  }) {
-    return TextField(
-      controller: ctrl,
-      keyboardType: keyboard,
-      style: AppTextStyles.bodyMedium,
-      decoration: _decoration(hint),
-    );
-  }
-
-  InputDecoration _decoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-      filled: true,
-      fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(color: AppColors.primary),
       ),
     );
   }
