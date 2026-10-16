@@ -30,5 +30,5 @@ class MainApp extends StatelessWidget {
 
 //configirar permisos y credenciales del github:
 //PS D:\Programacion\web-adso> git config --global user.name "serviplantulas-proyecto"            
-// PS D:\Programacion\web-adso> git config --global user.email "serviplantulas@gmail.com"
+//PS D:\Programacion\web-adso> git config --global user.email "serviplantulas@gmail.com"
 //check list instructor |°/- https://jlombanar.github.io/adso_ficha_3169657/ -\°|
