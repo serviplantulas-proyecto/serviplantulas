@@ -4,6 +4,7 @@ import '../componentes/recuperar_contrasena/recuperar_button.dart';
 import '../componentes/recuperar_contrasena/recuperar_code_input.dart';
 import '../componentes/recuperar_contrasena/recuperar_header.dart';
 import '../componentes/recuperar_contrasena/recuperar_password_field.dart';
+import '../componentes/recuperar_contrasena/recuperar_resend.dart';
 import '../services/auth_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
@@ -26,6 +27,7 @@ class _VerificarCodigoRecuperacionPageState
 
   String _code = '';
   bool _isLoading = false;
+  bool _isResending = false;
 
   @override
   void dispose() {
@@ -69,6 +71,30 @@ class _VerificarCodigoRecuperacionPageState
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
+    }
+  }
+
+  /// Reenvía el código de recuperación (mismo endpoint que el paso 1).
+  Future<void> _volverASolicitar() async {
+    if (_isResending || _isLoading) return;
+
+    setState(() => _isResending = true);
+    try {
+      await AuthService.solicitarRecuperacion(email: widget.email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Te enviamos un nuevo código de recuperación.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) setState(() => _isResending = false);
     }
   }
 
@@ -158,6 +184,13 @@ class _VerificarCodigoRecuperacionPageState
                   backgroundColor: AppColors.accent,
                   isLoading: _isLoading,
                   onPressed: _submitChange,
+                ),
+                const SizedBox(height: 20),
+                // Figma: "¿No recibiste el código? Volver a solicitar"
+                RecuperarResend(
+                  onResend: _isResending || _isLoading
+                      ? null
+                      : _volverASolicitar,
                 ),
               ],
             ),
