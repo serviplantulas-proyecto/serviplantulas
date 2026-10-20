@@ -29,14 +29,14 @@ class MenuMasPage extends StatelessWidget {
                 children: [
                   MenuOptionTile(
                     icon: Icons.category_outlined,
-                    title: 'Agregar Categoría',
-                    subtitle: 'Crear nuevas secciones de catálogo',
+                    title: 'Directorio Categorías',
+                    subtitle: 'Ver todas las categorás del catágolo',
                     onTap: () => _go(context, const AgregarCategoriaPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.local_shipping_outlined,
-                    title: 'Agregar Proveedor',
-                    subtitle: 'Registrar contactos de abastecimiento',
+                    title: 'Directorio Proveedores',
+                    subtitle: 'Ver contactos de abastecimiento',
                     onTap: () => _go(context, const AgregarProveedorPage()),
                   ),
                   MenuOptionTile(
