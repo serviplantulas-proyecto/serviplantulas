@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../componentes/analisis/analisis_granularidad.dart';
 import '../componentes/analisis/analisis_ingresos_card.dart';
 import '../componentes/analisis/analisis_mas_vendidos.dart';
+import '../componentes/analisis/analisis_mes_picker.dart';
 import '../componentes/analisis/analisis_periodo_selector.dart';
 import '../componentes/analisis/analisis_ventas_categoria.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
@@ -60,16 +61,11 @@ class _AnalisisVentasPageState extends State<AnalisisVentasPage> {
   ];
 
   Future<void> _abrirSelectorMes() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _mes,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      helpText: 'Selecciona el mes',
-      fieldLabelText: 'Mes',
-      locale: const Locale('es', 'CO'),
+    final picked = await AnalisisMesPicker.show(
+      context,
+      mesActual: _mes,
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _mes = DateTime(picked.year, picked.month);
         _dia = 1;
