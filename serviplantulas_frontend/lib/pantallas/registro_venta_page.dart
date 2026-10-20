@@ -18,50 +18,124 @@ class RegistroVentaPage extends StatefulWidget {
 }
 
 class _RegistroVentaPageState extends State<RegistroVentaPage> {
-  // Mock — reemplazar con datos del backend
-  Cliente? _cliente = const Cliente(
-    id: 'C001',
-    nombre: 'Carlos Restrepo',
-    documento: '1045230981',
-    tipoDocumento: 'C.C.',
-    telefono: '+57 312 450 9081',
-    descuentoFrecuente: 5,
-  );
+  final _clienteSearchCtrl = TextEditingController();
+  final _productoSearchCtrl = TextEditingController();
 
-  final List<ItemVenta> _items = [
-    ItemVenta(
-      producto: const Producto(
-        id: 'P001',
-        nombre: "Helecho Boston Maceta 10''",
-        categoria: 'Helechos',
-        proveedor: 'Nativo Verde S.A.',
-        precio: 22500,
-        stock: 124,
-      ),
-      cantidad: 3,
+  // Mock — reemplazar con datos del backend
+  static const _clientesMock = [
+    Cliente(
+      id: 'C001',
+      nombre: 'Carlos Restrepo',
+      documento: '1045230981',
+      tipoDocumento: 'C.C.',
+      telefono: '+57 312 450 9081',
+      descuentoFrecuente: 5,
     ),
-    ItemVenta(
-      producto: const Producto(
-        id: 'P002',
-        nombre: 'Cuna de Moisés (Spathiphyllum)',
-        categoria: 'Sombra',
-        proveedor: 'Floricultura del Valle',
-        precio: 18000,
-        stock: 82,
-      ),
-      cantidad: 1,
+    Cliente(
+      id: 'C002',
+      nombre: 'María López',
+      documento: '52987654',
+      tipoDocumento: 'C.C.',
+      telefono: '+57 300 111 2233',
+      descuentoFrecuente: 0,
     ),
   ];
 
+  static const _productosMock = [
+    Producto(
+      id: 'P001',
+      nombre: "Helecho Boston Maceta 10''",
+      categoria: 'Helechos',
+      proveedor: 'Nativo Verde S.A.',
+      precio: 22500,
+      stock: 124,
+    ),
+    Producto(
+      id: 'P002',
+      nombre: 'Cuna de Moisés (Spathiphyllum)',
+      categoria: 'Sombra',
+      proveedor: 'Floricultura del Valle',
+      precio: 18000,
+      stock: 82,
+    ),
+    Producto(
+      id: 'P003',
+      nombre: 'Anturio Rojo Maceta 6"',
+      categoria: 'Florales',
+      proveedor: 'Nativo Verde S.A.',
+      precio: 15000,
+      stock: 56,
+    ),
+  ];
+
+  Cliente? _cliente;
+  List<Cliente> _sugerenciasCliente = [];
+  List<Producto> _sugerenciasProducto = [];
+  final List<ItemVenta> _items = [];
   bool _isLoading = false;
 
-  double get _subtotal =>
-      _items.fold(0.0, (s, i) => s + i.subtotal);
-
+  double get _subtotal => _items.fold(0.0, (s, i) => s + i.subtotal);
   double get _descuento =>
       _subtotal * ((_cliente?.descuentoFrecuente ?? 0) / 100);
-
   double get _total => _subtotal - _descuento;
+
+  @override
+  void dispose() {
+    _clienteSearchCtrl.dispose();
+    _productoSearchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onClienteSearch(String q) {
+    final query = q.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _sugerenciasCliente = [];
+      } else {
+        // TODO: GET /clientes?q=...
+        _sugerenciasCliente = _clientesMock
+            .where((c) =>
+                c.nombre.toLowerCase().contains(query) ||
+                c.documento.contains(query))
+            .toList();
+      }
+    });
+  }
+
+  void _seleccionarCliente(Cliente c) {
+    setState(() {
+      _cliente = c;
+      _clienteSearchCtrl.text = '${c.tipoDocumento} ${c.documento} - ${c.nombre}';
+      _sugerenciasCliente = [];
+    });
+  }
+
+  void _onProductoSearch(String q) {
+    final query = q.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _sugerenciasProducto = [];
+      } else {
+        // TODO: GET /productos?q=...
+        _sugerenciasProducto = _productosMock
+            .where((p) => p.nombre.toLowerCase().contains(query))
+            .toList();
+      }
+    });
+  }
+
+  void _seleccionarProducto(Producto p) {
+    setState(() {
+      final idx = _items.indexWhere((i) => i.producto.id == p.id);
+      if (idx >= 0) {
+        _items[idx] = _items[idx].copyWith(cantidad: _items[idx].cantidad + 1);
+      } else {
+        _items.add(ItemVenta(producto: p, cantidad: 1));
+      }
+      _productoSearchCtrl.clear();
+      _sugerenciasProducto = [];
+    });
+  }
 
   void _cambiarCantidad(int index, int delta) {
     setState(() {
@@ -75,6 +149,15 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
   }
 
   void _registrarVenta() {
+    if (_cliente == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona un cliente'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     // TODO: POST /ventas al backend
     setState(() => _isLoading = true);
     Future.delayed(const Duration(seconds: 1), () {
@@ -106,23 +189,43 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                   children: [
                     VentaClienteSection(
                       cliente: _cliente,
+                      searchController: _clienteSearchCtrl,
+                      sugerencias: _sugerenciasCliente,
                       onNuevoCliente: () {
                         // TODO: navegar a agregar-cliente
+                      },
+                      onSearchChanged: _onClienteSearch,
+                      onClienteSeleccionado: _seleccionarCliente,
+                      onClearSearch: () {
+                        setState(() {
+                          _clienteSearchCtrl.clear();
+                          _sugerenciasCliente = [];
+                          _cliente = null;
+                        });
                       },
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     VentaProductosSection(
                       items: _items,
+                      searchController: _productoSearchCtrl,
+                      sugerencias: _sugerenciasProducto,
                       onIncrement: (i) => _cambiarCantidad(i, 1),
                       onDecrement: (i) => _cambiarCantidad(i, -1),
+                      onSearchChanged: _onProductoSearch,
+                      onProductoSeleccionado: _seleccionarProducto,
+                      onClearSearch: () {
+                        setState(() {
+                          _productoSearchCtrl.clear();
+                          _sugerenciasProducto = [];
+                        });
+                      },
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     VentaTotales(
                       subtotal: _subtotal,
                       descuento: _descuento,
                       total: _total,
-                      porcentajeDescuento:
-                          _cliente?.descuentoFrecuente ?? 0,
+                      porcentajeDescuento: _cliente?.descuentoFrecuente ?? 0,
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     AppButton(
@@ -130,8 +233,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                       type: AppButtonType.accent,
                       icon: Icons.check,
                       isLoading: _isLoading,
-                      onPressed:
-                          _items.isEmpty ? null : _registrarVenta,
+                      onPressed: _items.isEmpty ? null : _registrarVenta,
                     ),
                   ],
                 ),

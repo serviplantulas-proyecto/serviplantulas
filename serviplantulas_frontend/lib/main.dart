@@ -25,7 +25,7 @@ class MainApp extends StatelessWidget {
 //guia del panel administrativo  |°/- https://jlombanar.github.io/adso_3169657/ -\°|
 
 
-//pantallas para reducir(sacar widgets): registrar_producto_page.dart, detalle_producto_page.dart, analisis_ventas_page.dart, chat_eva_page.dart y mi_cuenta_page.dart, verificar "editar planta" del frontend- inventario
+//pantallas para reducir(sacar widgets): detalle_producto_page.dart, analisis_ventas_page.dart, chat_eva_page.dart y mi_cuenta_page.dart, verificar "editar planta" del frontend- inventario
 
 
 //configirar permisos y credenciales del github:

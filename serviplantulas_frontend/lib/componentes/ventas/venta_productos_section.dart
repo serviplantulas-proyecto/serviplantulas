@@ -4,6 +4,7 @@ import '../../models/producto.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import 'venta_search_field.dart';
 
 class ItemVenta {
   final Producto producto;
@@ -23,14 +24,24 @@ class ItemVenta {
 
 class VentaProductosSection extends StatelessWidget {
   final List<ItemVenta> items;
+  final TextEditingController searchController;
+  final List<Producto> sugerencias;
   final ValueChanged<int> onIncrement;
   final ValueChanged<int> onDecrement;
+  final ValueChanged<String>? onSearchChanged;
+  final ValueChanged<Producto>? onProductoSeleccionado;
+  final VoidCallback? onClearSearch;
 
   const VentaProductosSection({
     super.key,
     required this.items,
+    required this.searchController,
+    this.sugerencias = const [],
     required this.onIncrement,
     required this.onDecrement,
+    this.onSearchChanged,
+    this.onProductoSeleccionado,
+    this.onClearSearch,
   });
 
   String _money(double v) {
@@ -55,6 +66,24 @@ class VentaProductosSection extends StatelessWidget {
             color: AppColors.primary,
           ),
         ),
+        const SizedBox(height: 12),
+        // Buscador de productos (Figma)
+        VentaSearchField(
+          controller: searchController,
+          hintText: 'Escribe el nombre de la planta para añadir...',
+          leadingIcon: Icons.cancel_outlined,
+          showClear: searchController.text.isNotEmpty,
+          onChanged: onSearchChanged,
+          onClear: onClearSearch,
+        ),
+        if (sugerencias.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _SugerenciasProducto(
+            items: sugerencias,
+            money: _money,
+            onSelect: onProductoSeleccionado,
+          ),
+        ],
         const SizedBox(height: 12),
         ...List.generate(items.length, (i) {
           final item = items[i];
@@ -121,6 +150,58 @@ class VentaProductosSection extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+}
+
+class _SugerenciasProducto extends StatelessWidget {
+  final List<Producto> items;
+  final String Function(double) money;
+  final ValueChanged<Producto>? onSelect;
+
+  const _SugerenciasProducto({
+    required this.items,
+    required this.money,
+    this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: items.map((p) {
+          return InkWell(
+            onTap: () => onSelect?.call(p),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      p.nombre,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    money(p.precio),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

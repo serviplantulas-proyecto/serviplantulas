@@ -4,17 +4,26 @@ import '../../models/cliente.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import 'venta_search_field.dart';
 
 class VentaClienteSection extends StatelessWidget {
   final Cliente? cliente;
+  final TextEditingController searchController;
+  final List<Cliente> sugerencias;
   final VoidCallback? onNuevoCliente;
-  final VoidCallback? onBuscarCliente;
+  final ValueChanged<String>? onSearchChanged;
+  final ValueChanged<Cliente>? onClienteSeleccionado;
+  final VoidCallback? onClearSearch;
 
   const VentaClienteSection({
     super.key,
     this.cliente,
+    required this.searchController,
+    this.sugerencias = const [],
     this.onNuevoCliente,
-    this.onBuscarCliente,
+    this.onSearchChanged,
+    this.onClienteSeleccionado,
+    this.onClearSearch,
   });
 
   @override
@@ -46,67 +55,114 @@ class VentaClienteSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        if (cliente != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.editBackground,
-              borderRadius: BorderRadius.circular(AppRadius.medium),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
+        // Buscador siempre visible (Figma)
+        VentaSearchField(
+          controller: searchController,
+          hintText: 'Buscar por documento o nombre...',
+          leadingIcon: Icons.search,
+          showClear: searchController.text.isNotEmpty,
+          onChanged: onSearchChanged,
+          onClear: onClearSearch,
+        ),
+        if (sugerencias.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _SugerenciasCliente(
+            items: sugerencias,
+            onSelect: onClienteSeleccionado,
+          ),
+        ],
+        if (cliente != null) ...[
+          const SizedBox(height: 10),
+          _ClienteSeleccionadoCard(cliente: cliente!),
+        ],
+      ],
+    );
+  }
+}
+
+class _ClienteSeleccionadoCard extends StatelessWidget {
+  final Cliente cliente;
+
+  const _ClienteSeleccionadoCard({required this.cliente});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.editBackground,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        cliente!.nombre,
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'cel: ${cliente!.telefono ?? "—"}'
-                        '${cliente!.descuentoFrecuente > 0 ? " · Descuento Frecuente (${cliente!.descuentoFrecuente.toStringAsFixed(0)}%)" : ""}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                Text(
+                  cliente.nombre,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const Icon(Icons.check_circle, color: AppColors.success),
+                Text(
+                  'cel: ${cliente.telefono ?? "—"}'
+                  '${cliente.descuentoFrecuente > 0 ? " · Descuento Frecuente (${cliente.descuentoFrecuente.toStringAsFixed(0)}%)" : ""}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
-          )
-        else
-          GestureDetector(
-            onTap: onBuscarCliente,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.medium),
-                border: Border.all(color: AppColors.border),
-              ),
+          ),
+          const Icon(Icons.check_circle, color: AppColors.success),
+        ],
+      ),
+    );
+  }
+}
+
+class _SugerenciasCliente extends StatelessWidget {
+  final List<Cliente> items;
+  final ValueChanged<Cliente>? onSelect;
+
+  const _SugerenciasCliente({required this.items, this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: items.map((c) {
+          return InkWell(
+            onTap: () => onSelect?.call(c),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.search, size: 18, color: AppColors.textMuted),
+                  const Icon(Icons.person_outline,
+                      size: 18, color: AppColors.textMuted),
                   const SizedBox(width: 10),
-                  Text(
-                    'Buscar cliente por documento o nombre...',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textMuted,
+                  Expanded(
+                    child: Text(
+                      '${c.tipoDocumento} ${c.documento} - ${c.nombre}',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-      ],
+          );
+        }).toList(),
+      ),
     );
   }
 }
