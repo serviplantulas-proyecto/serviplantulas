@@ -230,8 +230,6 @@ class _ChatEvaPageState extends State<ChatEvaPage> {
             ),
           ),
           const SizedBox(width: 8),
-          Text("EVA puede cometer errores. Verifica los datos importantes.", style: TextStyle(fontSize: 14, color: Colors.black),),
-          const SizedBox(width: 8),
           CircleAvatar(
             backgroundColor: _cargando ? AppColors.textMuted : AppColors.primary,
             child: IconButton(

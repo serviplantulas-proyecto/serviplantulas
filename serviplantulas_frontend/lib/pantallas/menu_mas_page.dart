@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:serviplantulas_frontend/pantallas/analisis_ventas_page.dart';
 import 'package:serviplantulas_frontend/pantallas/categorias_page.dart';
 import 'package:serviplantulas_frontend/pantallas/directorio_proveedores_page.dart';
+import 'package:serviplantulas_frontend/pantallas/notificaciones_page.dart';
 
 import '../componentes/menu/menu_option_tile.dart';
 import '../styles/app_colors.dart';
@@ -69,6 +70,13 @@ class MenuMasPage extends StatelessWidget {
                     subtitle: 'Accede a la IA de ServiPlantulas',
                     iconBg: AppColors.infoBackground,
                     onTap: () => _go(context, const ChatEvaPage()),
+                  ),
+                  MenuOptionTile(
+                    icon: Icons.notifications_outlined,
+                    title: 'Notificaciones',
+                    subtitle: 'Observa todas las notificaciones que has recibido ',
+                    iconBg: AppColors.infoBackground,
+                    onTap: () => _go(context, const NotificacionesPage()),
                   ),
                 ],
               ),
