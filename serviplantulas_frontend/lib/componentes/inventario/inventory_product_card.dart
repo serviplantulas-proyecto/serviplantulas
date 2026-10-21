@@ -145,7 +145,7 @@ class InventoryProductCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${producto.stock} uds',
+                            '${producto.stock} Unidades',
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w700,

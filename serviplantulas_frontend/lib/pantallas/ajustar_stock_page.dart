@@ -85,7 +85,7 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
         },
       );
       if (!mounted) return;
-      _snack('Stock actualizado a $_nuevoStock uds');
+      _snack('Stock actualizado a $_nuevoStock Unidades');
       Navigator.pop(context, true);
     } on ProductosException catch (e) {
       if (!mounted) return;

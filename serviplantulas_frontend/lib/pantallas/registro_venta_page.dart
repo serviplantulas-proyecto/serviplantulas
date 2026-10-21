@@ -6,6 +6,7 @@ import '../componentes/ventas/venta_productos_section.dart';
 import '../componentes/ventas/venta_totales.dart';
 import '../models/cliente.dart';
 import '../models/producto.dart';
+import 'agregar_cliente_page.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
@@ -98,9 +99,11 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
       } else {
         // TODO: GET /clientes?q=...
         _sugerenciasCliente = _clientesMock
-            .where((c) =>
-                c.nombre.toLowerCase().contains(query) ||
-                c.documento.contains(query))
+            .where(
+              (c) =>
+                  c.nombre.toLowerCase().contains(query) ||
+                  c.documento.contains(query),
+            )
             .toList();
       }
     });
@@ -109,7 +112,8 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
   void _seleccionarCliente(Cliente c) {
     setState(() {
       _cliente = c;
-      _clienteSearchCtrl.text = '${c.tipoDocumento} ${c.documento} - ${c.nombre}';
+      _clienteSearchCtrl.text =
+          '${c.tipoDocumento} ${c.documento} - ${c.nombre}';
       _sugerenciasCliente = [];
     });
   }
@@ -196,7 +200,12 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                       searchController: _clienteSearchCtrl,
                       sugerencias: _sugerenciasCliente,
                       onNuevoCliente: () {
-                        // TODO: navegar a agregar-cliente
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AgregarClientePage(),
+                          ),
+                        );
                       },
                       onSearchChanged: _onClienteSearch,
                       onClienteSeleccionado: _seleccionarCliente,

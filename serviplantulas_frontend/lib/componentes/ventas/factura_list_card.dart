@@ -125,7 +125,7 @@ class FacturaListCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${factura.fecha} · ${factura.unidades} uds',
+                  '${factura.fecha} · ${factura.unidades} Unidades',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textMuted,
                   ),

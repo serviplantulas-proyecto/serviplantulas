@@ -17,7 +17,7 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
   final List<_Notif> _items = [
     _Notif(
       'Stock bajo',
-      'Ficus Lyrata Elegance tiene solo 15 uds',
+      'Ficus Lyrata Elegance tiene solo 15 Unidades',
       'Hace 2 h',
       Icons.warning_amber_rounded,
       AppColors.warning,

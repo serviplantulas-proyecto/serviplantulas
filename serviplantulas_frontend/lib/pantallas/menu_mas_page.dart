@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:serviplantulas_frontend/pantallas/categorias_page.dart';
+import 'package:serviplantulas_frontend/pantallas/directorio_proveedores_page.dart';
 
 import '../componentes/menu/menu_option_tile.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
-import 'agregar_categoria_page.dart';
-import 'agregar_proveedor_page.dart';
 import 'ajustar_stock_page.dart';
 import 'chat_eva_page.dart';
 import 'configurar_alertas_page.dart';
@@ -31,13 +31,13 @@ class MenuMasPage extends StatelessWidget {
                     icon: Icons.category_outlined,
                     title: 'Directorio Categorías',
                     subtitle: 'Ver todas las categorás del catágolo',
-                    onTap: () => _go(context, const AgregarCategoriaPage()),
+                    onTap: () => _go(context, const CategoriasPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.local_shipping_outlined,
                     title: 'Directorio Proveedores',
                     subtitle: 'Ver contactos de abastecimiento',
-                    onTap: () => _go(context, const AgregarProveedorPage()),
+                    onTap: () => _go(context, const DirectorioProveedoresPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.person_outline,

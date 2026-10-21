@@ -197,13 +197,13 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
                       children: [
                         _infoBox(
                           'Stock Actual',
-                          '${p.stock} uds',
+                          '${p.stock} Unidades',
                           p.stockBajo ? AppColors.warning : AppColors.success,
                         ),
                         const SizedBox(width: 12),
                         _infoBox(
                           'Stock mínimo',
-                          '${p.stockMinimo} uds',
+                          '${p.stockMinimo} Unidades',
                           AppColors.primary,
                         ),
                       ],

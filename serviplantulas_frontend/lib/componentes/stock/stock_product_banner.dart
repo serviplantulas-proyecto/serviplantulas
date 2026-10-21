@@ -49,7 +49,7 @@ class StockProductBanner extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '${producto.stock} uds',
+              '${producto.stock} Unidades',
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.accent,
                 fontWeight: FontWeight.w700,
@@ -83,9 +83,9 @@ class StockPreview extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _col('Stock Actual', '$stockActual uds', false),
+          _col('Stock Actual', '$stockActual Unidades', false),
           const Icon(Icons.swap_horiz, color: AppColors.success),
-          _col('Nuevo Stock', '$stockNuevo uds', true),
+          _col('Nuevo Stock', '$stockNuevo Unidades', true),
         ],
       ),
     );

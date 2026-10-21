@@ -142,7 +142,7 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(width: 12),
               StatCard(
                 label: 'Productos Stock',
-                value: '${_formatNumber(stats.productosStock)} uds',
+                value: '${_formatNumber(stats.productosStock)} Unidades',
                 icon: Icons.local_florist,
                 iconBackground: AppColors.editBackground,
               ),
