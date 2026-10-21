@@ -2,50 +2,113 @@ import 'package:flutter/material.dart';
 
 import '../componentes/boton/app_button.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
+import '../models/proveedor.dart';
+import '../services/proveedores_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
 
 class AgregarProveedorPage extends StatefulWidget {
-  const AgregarProveedorPage({super.key});
+  final Proveedor? proveedor;
+
+  const AgregarProveedorPage({super.key, this.proveedor});
 
   @override
   State<AgregarProveedorPage> createState() => _AgregarProveedorPageState();
 }
 
 class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
+  final _service = ProveedoresService();
   final _nombreCtrl = TextEditingController();
-  final _nitCtrl = TextEditingController();
   final _contactoCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _direccionCtrl = TextEditingController();
   bool _isLoading = false;
+
+  bool get _esEdicion => widget.proveedor != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.proveedor;
+    if (p != null) {
+      _nombreCtrl.text = p.nombreProveedor;
+      _contactoCtrl.text = p.contactoRepresentante ?? '';
+      _telCtrl.text = p.telefonoProveedor ?? '';
+      _emailCtrl.text = p.emailProveedor ?? '';
+      _direccionCtrl.text = p.direccionProveedor ?? '';
+    }
+  }
 
   @override
   void dispose() {
     _nombreCtrl.dispose();
-    _nitCtrl.dispose();
     _contactoCtrl.dispose();
     _telCtrl.dispose();
     _emailCtrl.dispose();
+    _direccionCtrl.dispose();
     super.dispose();
   }
 
-  void _guardar() {
-    // TODO: POST /proveedores
+  Future<void> _guardar() async {
+    final nombre = _nombreCtrl.text.trim();
+    if (nombre.isEmpty) {
+      _snack('El nombre / razón social es obligatorio', error: true);
+      return;
+    }
+
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 600), () {
+    try {
+      if (_esEdicion) {
+        await _service.actualizar(
+          id: widget.proveedor!.idProveedor,
+          campos: {
+            'nombre_proveedor': nombre,
+            'contacto_representante': _contactoCtrl.text.trim(),
+            'telefono_proveedor': _telCtrl.text.trim(),
+            'email_proveedor': _emailCtrl.text.trim(),
+            'direccion_proveedor': _direccionCtrl.text.trim(),
+          },
+        );
+        if (!mounted) return;
+        _snack('Proveedor actualizado');
+      } else {
+        await _service.crear(
+          nombreProveedor: nombre,
+          contactoRepresentante: _emptyToNull(_contactoCtrl.text),
+          telefonoProveedor: _emptyToNull(_telCtrl.text),
+          emailProveedor: _emptyToNull(_emailCtrl.text),
+          direccionProveedor: _emptyToNull(_direccionCtrl.text),
+        );
+        if (!mounted) return;
+        _snack('Proveedor guardado');
+      }
+      Navigator.pop(context, true);
+    } on ProveedoresException catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Proveedor guardado (mock)'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.pop(context);
-    });
+      _snack(e.message, error: true);
+    } catch (_) {
+      if (!mounted) return;
+      _snack('Error al guardar', error: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String? _emptyToNull(String s) {
+    final t = s.trim();
+    return t.isEmpty ? null : t;
+  }
+
+  void _snack(String msg, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: error ? AppColors.error : AppColors.success,
+      ),
+    );
   }
 
   @override
@@ -55,7 +118,9 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
       body: SafeArea(
         child: Column(
           children: [
-            const AppBarSimple(title: 'Agregar Proveedor'),
+            AppBarSimple(
+              title: _esEdicion ? 'Editar Proveedor' : 'Agregar Proveedor',
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -64,9 +129,6 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
                   children: [
                     _label('Nombre / Razón Social'),
                     _field(_nombreCtrl, 'Ej. Nativo Verde S.A.'),
-                    const SizedBox(height: AppSpacing.large),
-                    _label('NIT'),
-                    _field(_nitCtrl, '900.000.000-0'),
                     const SizedBox(height: AppSpacing.large),
                     _label('Persona de Contacto'),
                     _field(_contactoCtrl, 'Nombre del contacto'),
@@ -84,9 +146,14 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
                       'contacto@proveedor.com',
                       keyboard: TextInputType.emailAddress,
                     ),
+                    const SizedBox(height: AppSpacing.large),
+                    _label('Dirección'),
+                    _field(_direccionCtrl, 'Ciudad, dirección...'),
                     const SizedBox(height: AppSpacing.extraLarge),
                     AppButton(
-                      text: 'Guardar Proveedor',
+                      text: _esEdicion
+                          ? 'Guardar cambios'
+                          : 'Guardar Proveedor',
                       isLoading: _isLoading,
                       onPressed: _guardar,
                     ),
