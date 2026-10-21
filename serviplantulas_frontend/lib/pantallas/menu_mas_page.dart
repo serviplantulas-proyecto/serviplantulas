@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:serviplantulas_frontend/pantallas/analisis_ventas_page.dart';
 import 'package:serviplantulas_frontend/pantallas/categorias_page.dart';
 import 'package:serviplantulas_frontend/pantallas/directorio_proveedores_page.dart';
 
 import '../componentes/menu/menu_option_tile.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
-import 'ajustar_stock_page.dart';
 import 'chat_eva_page.dart';
 import 'configurar_alertas_page.dart';
 import 'historial_facturas_page.dart';
@@ -28,6 +28,12 @@ class MenuMasPage extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
                 children: [
                   MenuOptionTile(
+                    icon: Icons.person_outline,
+                    title: 'Mi Cuenta',
+                    subtitle: 'Configuración de perfil y acceso',
+                    onTap: () => _go(context, const MiCuentaPage()),
+                  ),
+                  MenuOptionTile(
                     icon: Icons.category_outlined,
                     title: 'Directorio Categorías',
                     subtitle: 'Ver todas las categorás del catágolo',
@@ -38,12 +44,6 @@ class MenuMasPage extends StatelessWidget {
                     title: 'Directorio Proveedores',
                     subtitle: 'Ver contactos de abastecimiento',
                     onTap: () => _go(context, const DirectorioProveedoresPage()),
-                  ),
-                  MenuOptionTile(
-                    icon: Icons.person_outline,
-                    title: 'Mi Cuenta',
-                    subtitle: 'Configuración de perfil y acceso',
-                    onTap: () => _go(context, const MiCuentaPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.notifications_outlined,
@@ -58,10 +58,10 @@ class MenuMasPage extends StatelessWidget {
                     onTap: () => _go(context, const HistorialFacturasPage()),
                   ),
                   MenuOptionTile(
-                    icon: Icons.swap_vert,
-                    title: 'Ajustar Stock',
-                    subtitle: 'Modificaciones manuales de inventario',
-                    onTap: () => _go(context, const AjustarStockPage()),
+                    icon: Icons.bar_chart,
+                    title: 'Analisis de Ventas',
+                    subtitle: 'Accede al analisis de las ventas ',
+                    onTap: () => _go(context, const AnalisisVentasPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.smart_toy_outlined,
