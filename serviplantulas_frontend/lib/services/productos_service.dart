@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/categoria.dart';
@@ -19,7 +20,6 @@ class ProductosException implements Exception {
 }
 
 /// Service del módulo productos / categorías / proveedores.
-/// Habla con el backend real (sin mocks).
 class ProductosService {
   static const _tokenKey = 'auth_token';
 
@@ -27,7 +27,6 @@ class ProductosService {
   // PRODUCTOS
   // ═══════════════════════════════════════
 
-  /// GET /productos/productos
   Future<List<Producto>> listar({
     String? busqueda,
     int? idCategoria,
@@ -51,7 +50,6 @@ class ProductosService {
     return lista;
   }
 
-  /// GET /productos/productos/:id
   Future<Producto> obtenerPorId(int id) async {
     final decoded = await _get(Uri.parse(ApiConfig.productoByIdUrl(id)));
     if (decoded is! Map<String, dynamic>) {
@@ -60,7 +58,6 @@ class ProductosService {
     return Producto.fromJson(decoded);
   }
 
-  /// POST /productos/productos  (multipart, requiere token admin)
   Future<Producto> crear({
     required String nombreProducto,
     String? descripcionProducto,
@@ -97,30 +94,12 @@ class ProductosService {
       request.fields['id_categoria'] = idCategoria.toString();
     }
     if (imagen != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('imagen', imagen.path),
-      );
+      request.files.add(await _archivoImagen(imagen));
     }
 
-    final streamed = await request.send().timeout(const Duration(seconds: 30));
-    final response = await http.Response.fromStream(streamed);
-    final decoded = _decodeBody(response);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ProductosException(_errorMsg(decoded, 'No se pudo crear el producto.'));
-    }
-
-    final productoJson = decoded is Map && decoded['producto'] is Map
-        ? Map<String, dynamic>.from(decoded['producto'] as Map)
-        : (decoded is Map<String, dynamic> ? decoded : null);
-
-    if (productoJson == null) {
-      throw const ProductosException('El servidor no devolvió el producto creado.');
-    }
-    return Producto.fromJson(productoJson);
+    return _enviarMultipart(request, 'No se pudo crear el producto.');
   }
 
-  /// PUT /productos/productos/:id  (multipart opcional)
   Future<Producto> actualizar({
     required int id,
     Map<String, String>? campos,
@@ -136,31 +115,12 @@ class ProductosService {
 
     if (campos != null) request.fields.addAll(campos);
     if (imagen != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('imagen', imagen.path),
-      );
+      request.files.add(await _archivoImagen(imagen));
     }
 
-    final streamed = await request.send().timeout(const Duration(seconds: 30));
-    final response = await http.Response.fromStream(streamed);
-    final decoded = _decodeBody(response);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ProductosException(
-        _errorMsg(decoded, 'No se pudo actualizar el producto.'),
-      );
-    }
-
-    final productoJson = decoded is Map && decoded['producto'] is Map
-        ? Map<String, dynamic>.from(decoded['producto'] as Map)
-        : null;
-    if (productoJson == null) {
-      throw const ProductosException('Respuesta inválida al actualizar.');
-    }
-    return Producto.fromJson(productoJson);
+    return _enviarMultipart(request, 'No se pudo actualizar el producto.');
   }
 
-  /// DELETE /productos/productos/:id
   Future<void> eliminar(int id) async {
     final token = await _token();
     final response = await http
@@ -179,23 +139,77 @@ class ProductosService {
   }
 
   // ═══════════════════════════════════════
-  // CATEGORÍAS
+  // CATEGORÍAS / PROVEEDORES
   // ═══════════════════════════════════════
 
-  /// GET /categorias/
   Future<List<Categoria>> listarCategorias() async {
     final decoded = await _get(Uri.parse(ApiConfig.categoriasUrl));
     return _asList(decoded).map(Categoria.fromJson).toList();
   }
 
-  // ═══════════════════════════════════════
-  // PROVEEDORES
-  // ═══════════════════════════════════════
-
-  /// GET /proveedores/
   Future<List<Proveedor>> listarProveedores() async {
     final decoded = await _get(Uri.parse(ApiConfig.proveedoresUrl));
     return _asList(decoded).map(Proveedor.fromJson).toList();
+  }
+
+  // ═══════════════════════════════════════
+  // Multipart imagen (Cloudinary / Multer)
+  // ═══════════════════════════════════════
+
+  /// Campo `imagen` con Content-Type explícito (como en la guía ADSO).
+  static Future<http.MultipartFile> _archivoImagen(File imagen) async {
+    final bytes = await imagen.readAsBytes();
+    final ext = imagen.path.split('.').last.toLowerCase();
+    final subtipo = switch (ext) {
+      'png' => 'png',
+      'webp' => 'webp',
+      'avif' => 'avif',
+      _ => 'jpeg',
+    };
+    final filename =
+        'producto_${DateTime.now().millisecondsSinceEpoch}.${subtipo == 'jpeg' ? 'jpg' : subtipo}';
+
+    return http.MultipartFile.fromBytes(
+      'imagen',
+      bytes,
+      contentType: MediaType('image', subtipo),
+      filename: filename,
+    );
+  }
+
+  Future<Producto> _enviarMultipart(
+    http.MultipartRequest request,
+    String fallbackError,
+  ) async {
+    try {
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 45));
+      final response = await http.Response.fromStream(streamed);
+      final decoded = _decodeBody(response);
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ProductosException(_errorMsg(decoded, fallbackError));
+      }
+
+      final productoJson = decoded is Map && decoded['producto'] is Map
+          ? Map<String, dynamic>.from(decoded['producto'] as Map)
+          : (decoded is Map<String, dynamic> ? decoded : null);
+
+      if (productoJson == null) {
+        throw const ProductosException(
+          'El servidor no devolvió el producto.',
+        );
+      }
+      return Producto.fromJson(productoJson);
+    } on SocketException {
+      throw const ProductosException(
+        'No se pudo conectar con el servidor.',
+      );
+    } on TimeoutException {
+      throw const ProductosException(
+        'El servidor tardó demasiado en responder.',
+      );
+    }
   }
 
   // ═══════════════════════════════════════

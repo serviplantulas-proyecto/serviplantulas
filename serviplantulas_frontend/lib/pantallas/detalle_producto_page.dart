@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../models/producto.dart';
+import '../services/productos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
@@ -9,23 +10,137 @@ import '../styles/app_text_styles.dart';
 import 'ajustar_stock_page.dart';
 import 'registrar_producto_page.dart';
 
-class DetalleProductoPage extends StatelessWidget {
+class DetalleProductoPage extends StatefulWidget {
   final Producto producto;
 
   const DetalleProductoPage({super.key, required this.producto});
+
+  @override
+  State<DetalleProductoPage> createState() => _DetalleProductoPageState();
+}
+
+class _DetalleProductoPageState extends State<DetalleProductoPage> {
+  final _service = ProductosService();
+  late Producto _producto;
+  bool _eliminando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _producto = widget.producto;
+  }
 
   String _money(double v) {
     final s = v.toStringAsFixed(0);
     final buf = StringBuffer();
     for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
       buf.write(s[i]);
     }
-    return '\$${buf.toString()}';
+    return '${buf.toString()} COP';
+  }
+
+  Future<void> _editar() async {
+    final ok = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RegistrarProductoPage(producto: _producto),
+      ),
+    );
+    if (ok == true && mounted) {
+      try {
+        final actualizado =
+            await _service.obtenerPorId(_producto.idProducto);
+        setState(() => _producto = actualizado);
+      } catch (_) {
+        Navigator.pop(context, true);
+      }
+    }
+  }
+
+  Future<void> _ajustarStock() async {
+    final ok = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AjustarStockPage(producto: _producto),
+      ),
+    );
+    if (ok == true && mounted) {
+      try {
+        final actualizado =
+            await _service.obtenerPorId(_producto.idProducto);
+        setState(() => _producto = actualizado);
+      } catch (_) {
+        Navigator.pop(context, true);
+      }
+    }
+  }
+
+  Future<void> _eliminar() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar producto'),
+        content: Text(
+          '¿Seguro que quieres eliminar "${_producto.nombre}"?\n'
+          'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    setState(() => _eliminando = true);
+    try {
+      await _service.eliminar(_producto.idProducto);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Producto eliminado'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context, true);
+    } on ProductosException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo eliminar el producto'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _eliminando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final p = _producto;
+    final desc = (p.descripcionProducto != null &&
+            p.descripcionProducto!.trim().isNotEmpty)
+        ? p.descripcionProducto!
+        : 'Sin descripción.';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -38,14 +153,14 @@ class DetalleProductoPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _imageBanner(),
+                    _imageBanner(p),
                     const SizedBox(height: AppSpacing.large),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _badge(producto.categoria),
+                        _badge(p.categoria),
                         Text(
-                          '${_money(producto.precio)} COP',
+                          _money(p.precio),
                           style: AppTextStyles.bodyLarge.copyWith(
                             color: AppColors.accent,
                             fontWeight: FontWeight.w800,
@@ -55,7 +170,7 @@ class DetalleProductoPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      producto.nombre,
+                      p.nombre,
                       style: AppTextStyles.titleSmall.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
@@ -63,53 +178,54 @@ class DetalleProductoPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Planta de follaje denso y elegante. Ideal para interiores '
-                      'bien iluminados o zonas de sombra en exteriores.',
+                      desc,
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
+                    if (p.costoCompra != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Costo compra: ${_money(p.costoCompra!)}',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.large),
                     Row(
                       children: [
                         _infoBox(
                           'Stock Actual',
-                          '${producto.stock} uds',
-                          AppColors.success,
+                          '${p.stock} uds',
+                          p.stockBajo ? AppColors.warning : AppColors.success,
                         ),
                         const SizedBox(width: 12),
                         _infoBox(
-                          'Proveedor',
-                          producto.proveedor,
+                          'Stock mínimo',
+                          '${p.stockMinimo} uds',
                           AppColors.primary,
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.extraLarge),
-                    Text(
-                      'Últimos Ingresos de Stock (Historial)',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
                     const SizedBox(height: 12),
-                    _historialRow('12 Oct 2023', '+50 unidades', '\$12,000/u'),
-                    _historialRow('24 Sep 2023', '+40 unidades', '\$11,500/u'),
+                    Row(
+                      children: [
+                        _infoBox('Proveedor', p.proveedor, AppColors.primary),
+                        const SizedBox(width: 12),
+                        _infoBox(
+                          'ID',
+                          '#${p.idProducto}',
+                          AppColors.textSecondary,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const RegistrarProductoPage(),
-                                ),
-                              );
-                            },
+                            onPressed: _editar,
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.primary,
                               side: const BorderSide(color: AppColors.primary),
@@ -125,10 +241,7 @@ class DetalleProductoPage extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {
-                              // TODO: DELETE /productos/:id
-                              Navigator.pop(context);
-                            },
+                            onPressed: _eliminando ? null : _eliminar,
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.error,
                               side: const BorderSide(color: AppColors.error),
@@ -138,7 +251,15 @@ class DetalleProductoPage extends StatelessWidget {
                                     BorderRadius.circular(AppRadius.medium),
                               ),
                             ),
-                            child: const Text('Eliminar Registro'),
+                            child: _eliminando
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Eliminar'),
                           ),
                         ),
                       ],
@@ -147,15 +268,7 @@ class DetalleProductoPage extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AjustarStockPage(producto: producto),
-                            ),
-                          );
-                        },
+                        onPressed: _ajustarStock,
                         icon: const Icon(Icons.swap_vert, size: 18),
                         label: const Text('Ajustar Stock'),
                         style: TextButton.styleFrom(
@@ -173,7 +286,7 @@ class DetalleProductoPage extends StatelessWidget {
     );
   }
 
-  Widget _imageBanner() {
+  Widget _imageBanner(Producto producto) {
     return Container(
       width: double.infinity,
       height: 180,
@@ -247,46 +360,6 @@ class DetalleProductoPage extends StatelessWidget {
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _historialRow(String fecha, String qty, String precio) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Text(
-              fecha,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              qty,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.success,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              precio,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
             ),
           ],
         ),
