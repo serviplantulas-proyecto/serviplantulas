@@ -21,7 +21,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
   final _clienteSearchCtrl = TextEditingController();
   final _productoSearchCtrl = TextEditingController();
 
-  // Mock — reemplazar con datos del backend
+  // Mock clientes — más adelante GET /clientes
   static const _clientesMock = [
     Cliente(
       id: 'C001',
@@ -41,30 +41,34 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
     ),
   ];
 
+  // Mock productos con el constructor nuevo (campos del backend)
   static const _productosMock = [
     Producto(
-      id: 'P001',
-      nombre: "Helecho Boston Maceta 10''",
-      categoria: 'Helechos',
-      proveedor: 'Nativo Verde S.A.',
-      precio: 22500,
+      idProducto: 1,
+      nombreProducto: "Helecho Boston Maceta 10''",
+      precioProducto: 22500,
       stock: 124,
+      stockMinimo: 10,
+      nombreCategoria: 'Helechos',
+      nombreProveedor: 'Nativo Verde S.A.',
     ),
     Producto(
-      id: 'P002',
-      nombre: 'Cuna de Moisés (Spathiphyllum)',
-      categoria: 'Sombra',
-      proveedor: 'Floricultura del Valle',
-      precio: 18000,
+      idProducto: 2,
+      nombreProducto: 'Cuna de Moisés (Spathiphyllum)',
+      precioProducto: 18000,
       stock: 82,
+      stockMinimo: 10,
+      nombreCategoria: 'Sombra',
+      nombreProveedor: 'Floricultura del Valle',
     ),
     Producto(
-      id: 'P003',
-      nombre: 'Anturio Rojo Maceta 6"',
-      categoria: 'Florales',
-      proveedor: 'Nativo Verde S.A.',
-      precio: 15000,
+      idProducto: 3,
+      nombreProducto: 'Anturio Rojo Maceta 6"',
+      precioProducto: 15000,
       stock: 56,
+      stockMinimo: 5,
+      nombreCategoria: 'Florales',
+      nombreProveedor: 'Nativo Verde S.A.',
     ),
   ];
 
@@ -116,7 +120,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
       if (query.isEmpty) {
         _sugerenciasProducto = [];
       } else {
-        // TODO: GET /productos?q=...
+        // TODO: GET /productos/productos (ProductosService.listar)
         _sugerenciasProducto = _productosMock
             .where((p) => p.nombre.toLowerCase().contains(query))
             .toList();
@@ -158,7 +162,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
       );
       return;
     }
-    // TODO: POST /ventas al backend
+    // TODO: POST /pedidos al backend
     setState(() => _isLoading = true);
     Future.delayed(const Duration(seconds: 1), () {
       if (!mounted) return;

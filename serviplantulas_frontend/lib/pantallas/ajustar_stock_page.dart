@@ -6,6 +6,7 @@ import '../componentes/compartidos/form_dropdown.dart';
 import '../componentes/compartidos/qty_stepper.dart';
 import '../componentes/stock/stock_product_banner.dart';
 import '../models/producto.dart';
+import '../services/productos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
@@ -21,13 +22,12 @@ class AjustarStockPage extends StatefulWidget {
 }
 
 class _AjustarStockPageState extends State<AjustarStockPage> {
+  final _service = ProductosService();
   late final Producto _producto;
   String _tipoAjuste = 'Ingreso (Suma al stock)';
   String _motivo = 'Compra';
   int _cantidad = 10;
-  final _notaCtrl = TextEditingController(
-    text: 'Ingreso por compra directa a Nativo Verde',
-  );
+  final _notaCtrl = TextEditingController();
   bool _isLoading = false;
 
   static const _tipos = [
@@ -36,7 +36,11 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
     'Ajuste manual',
   ];
   static const _motivos = [
-    'Compra', 'Venta', 'Merma', 'Devolución', 'Inventario físico',
+    'Compra',
+    'Venta',
+    'Merma',
+    'Devolución',
+    'Inventario físico',
   ];
 
   @override
@@ -44,12 +48,10 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
     super.initState();
     _producto = widget.producto ??
         const Producto(
-          id: 'CC-9081',
-          nombre: "Helecho Boston Maceta 10''",
-          categoria: 'Plantas',
-          proveedor: 'Nativo Verde S.A.',
-          precio: 22500,
-          stock: 45,
+          idProducto: 0,
+          nombreProducto: 'Producto',
+          precioProducto: 0,
+          stock: 0,
         );
   }
 
@@ -64,23 +66,45 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
     if (_tipoAjuste.startsWith('Salida')) {
       return (_producto.stock - _cantidad).clamp(0, 999999);
     }
-    return _cantidad;
+    return _cantidad; // ajuste manual = valor absoluto
   }
 
-  void _confirmar() {
-    // TODO: POST /inventario/ajuste
+  Future<void> _confirmar() async {
+    if (_producto.idProducto <= 0) {
+      _snack('Producto inválido', error: true);
+      return;
+    }
+
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Stock ajustado (mock)'),
-          backgroundColor: AppColors.success,
-        ),
+    try {
+      // El backend actualiza con PUT multipart/campos
+      await _service.actualizar(
+        id: _producto.idProducto,
+        campos: {
+          'stock': _nuevoStock.toString(),
+        },
       );
-      Navigator.pop(context);
-    });
+      if (!mounted) return;
+      _snack('Stock actualizado a $_nuevoStock uds');
+      Navigator.pop(context, true);
+    } on ProductosException catch (e) {
+      if (!mounted) return;
+      _snack(e.message, error: true);
+    } catch (_) {
+      if (!mounted) return;
+      _snack('Error al ajustar el stock', error: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _snack(String msg, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: error ? AppColors.error : AppColors.success,
+      ),
+    );
   }
 
   @override
@@ -157,7 +181,7 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
                     AppButton(
                       text: 'Confirmar Ajuste',
                       isLoading: _isLoading,
-                      onPressed: _confirmar,
+                      onPressed: _isLoading ? null : _confirmar,
                     ),
                   ],
                 ),

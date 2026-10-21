@@ -1,85 +1,68 @@
 import '../models/producto.dart';
+import 'productos_service.dart';
 
-/// Servicio de inventario.
-/// Actualmente usa datos mock. Conectar al backend reemplazando
-/// el cuerpo de cada método.
+/// Capa de inventario usada por las pantallas.
+/// Delega en [ProductosService] (backend real).
+///
+/// Mantiene la misma API que antes para no romper InventarioPage.
 class InventarioService {
-  // TODO: ApiConfig.baseUrl + 'productos'
+  final ProductosService _api = ProductosService();
 
+  /// Lista productos desde el backend.
+  /// [categoria] es el **nombre** de la categoría (como en los chips),
+  /// o 'Todos' para no filtrar.
   Future<List<Producto>> obtenerProductos({
     String? busqueda,
     String? categoria,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    int? idCategoria;
 
-    final todos = _mockProductos;
-
-    var filtrados = todos;
     if (categoria != null && categoria != 'Todos') {
-      filtrados = filtrados
-          .where((p) =>
-              p.categoria.toLowerCase() == categoria.toLowerCase())
-          .toList();
+      final cats = await _api.listarCategorias();
+      final match = cats.where(
+        (c) => c.nombreCategoria.toLowerCase() == categoria.toLowerCase(),
+      );
+      if (match.isNotEmpty) {
+        idCategoria = match.first.idCategoria;
+      }
     }
-    if (busqueda != null && busqueda.trim().isNotEmpty) {
-      final q = busqueda.toLowerCase();
-      filtrados = filtrados
-          .where((p) =>
-              p.nombre.toLowerCase().contains(q) ||
-              p.categoria.toLowerCase().contains(q) ||
-              p.id.toLowerCase().contains(q))
-          .toList();
-    }
-    return filtrados;
+
+    final productos = await _api.listar(
+      busqueda: busqueda,
+      idCategoria: idCategoria,
+    );
+
+    // Enriquecer con nombres de categoría/proveedor si el API no los trae.
+    return _enriquecer(productos);
   }
 
+  /// Nombres de categoría para los chips (+ "Todos").
   Future<List<String>> obtenerCategorias() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    return const [
-      'Todos',
-      'Flores',
-      'Arbustos',
-      'Frutales',
-      'Suculentas',
-      'Helechos',
-      'Sombra',
-      'Interiores',
-    ];
+    final cats = await _api.listarCategorias();
+    return ['Todos', ...cats.map((c) => c.nombreCategoria)];
   }
 
-  static const List<Producto> _mockProductos = [
-    Producto(
-      id: 'P001',
-      nombre: "Helecho Boston Maceta 10''",
-      categoria: 'Helechos',
-      proveedor: 'Nativo Verde S.A.',
-      precio: 22500,
-      stock: 124,
-    ),
-    Producto(
-      id: 'P002',
-      nombre: 'Cuna de Moisés (Spathiphyllum)',
-      categoria: 'Sombra',
-      proveedor: 'Floricultura del Valle',
-      precio: 18000,
-      stock: 82,
-    ),
-    Producto(
-      id: 'P003',
-      nombre: 'Ficus Lyrata Elegance',
-      categoria: 'Arbustos',
-      proveedor: 'Importaciones Verdes',
-      precio: 55000,
-      stock: 15,
-      stockBajo: true,
-    ),
-    Producto(
-      id: 'P004',
-      nombre: 'Monstera Deliciosa',
-      categoria: 'Interiores',
-      proveedor: 'Nativo Verde S.A.',
-      precio: 32500,
-      stock: 48,
-    ),
-  ];
+  Future<List<Producto>> _enriquecer(List<Producto> productos) async {
+    if (productos.isEmpty) return productos;
+
+    // Cargar mapas una sola vez
+    final cats = await _api.listarCategorias();
+    final provs = await _api.listarProveedores();
+
+    final catMap = {
+      for (final c in cats) c.idCategoria: c.nombreCategoria,
+    };
+    final provMap = {
+      for (final p in provs) p.idProveedor: p.nombreProveedor,
+    };
+
+    return productos.map((p) {
+      return p.copyWith(
+        nombreCategoria: p.nombreCategoria ??
+            (p.idCategoria != null ? catMap[p.idCategoria] : null),
+        nombreProveedor: p.nombreProveedor ??
+            (p.idProveedor != null ? provMap[p.idProveedor] : null),
+      );
+    }).toList();
+  }
 }
