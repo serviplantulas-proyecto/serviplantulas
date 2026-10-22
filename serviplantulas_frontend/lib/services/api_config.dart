@@ -2,6 +2,10 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiConfig {
+  static const String _apiBaseUrlOverride = String.fromEnvironment(
+    'API_BASE_URL',
+  );
+
   // ── Auth ──
   static String get loginUrl => '${_apiHost}auth/login';
   static String get registerUrl => '${_apiHost}auth/register';
@@ -34,6 +38,11 @@ class ApiConfig {
   static String get clientesUrl => '${_apiHost}clientes/';
 
   static String get _apiHost {
+    if (_apiBaseUrlOverride.isNotEmpty) {
+      return _apiBaseUrlOverride.endsWith('/')
+          ? _apiBaseUrlOverride
+          : '$_apiBaseUrlOverride/';
+    }
     if (kIsWeb) {
       return 'http://localhost:3000/';
     }
@@ -50,10 +59,11 @@ class ApiConfig {
   static const Map<String, String> headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   };
 
   static Map<String, String> authHeaders(String token) => {
-        ...headers,
-        'Authorization': 'Bearer $token',
-      };
+    ...headers,
+    'Authorization': 'Bearer $token',
+  };
 }

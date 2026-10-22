@@ -40,3 +40,9 @@ class MainApp extends StatelessWidget {
 //PS D:\Programacion\web-adso> git config --global user.name "serviplantulas-proyecto"
 //PS D:\Programacion\web-adso> git config --global user.email "serviplantulas@gmail.com"
 //check list instructor |°/- https://jlombanar.github.io/adso_ficha_3169657/ -\°|
+
+//comandos para elevar sv, apk:
+//dependencia para instalar: npm install -g ngrok
+//comando del token ngrok config add-authtoken 3L3KIYhhybxJYXmSMVStIIRxDZW_ttp6Qj9TW5b1q7nfUtay
+//habilitar la puerta de enlace  ngrok http 3000
+//pagina del ngrok: https://dashboard.ngrok.com/
