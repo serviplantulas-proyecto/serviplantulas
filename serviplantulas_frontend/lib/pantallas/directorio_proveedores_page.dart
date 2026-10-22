@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../componentes/inventario/inventory_search_bar.dart';
+import '../componentes/proveedores/proveedor_expandable_card.dart';
 import '../models/proveedor.dart';
 import '../services/proveedores_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
 import '../styles/app_text_styles.dart';
 import 'agregar_proveedor_page.dart';
 
@@ -20,9 +20,12 @@ class DirectorioProveedoresPage extends StatefulWidget {
 class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
   final _service = ProveedoresService();
   final _searchCtrl = TextEditingController();
-  List<Proveedor> _proveedores = [];
+  List<Proveedor> _todos = [];
+  List<Proveedor> _filtrados = [];
+  int? _expandedId;
   bool _loading = true;
   String? _error;
+  String? _filtroActivo;
 
   @override
   void initState() {
@@ -42,32 +45,37 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
       _error = null;
     });
     try {
-      final lista = await _service.listar(busqueda: _searchCtrl.text);
+      final lista = await _service.listar();
       if (!mounted) return;
       setState(() {
-        _proveedores = lista;
+        _todos = lista;
+        _aplicarFiltro();
         _loading = false;
       });
-    } on ProveedoresException catch (e) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.message;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'No se pudieron cargar los proveedores.';
+        _error = e is ProveedoresException
+            ? e.message
+            : 'No se pudieron cargar los proveedores.';
       });
     }
   }
 
-  Future<void> _filtrar() async {
-    try {
-      final lista = await _service.listar(busqueda: _searchCtrl.text);
-      if (mounted) setState(() => _proveedores = lista);
-    } catch (_) {}
+  void _aplicarFiltro() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    _filtrados = q.isEmpty
+        ? List.from(_todos)
+        : _todos
+            .where((p) =>
+                p.nombreProveedor.toLowerCase().contains(q) ||
+                (p.contactoRepresentante?.toLowerCase().contains(q) ??
+                    false) ||
+                (p.telefonoProveedor?.contains(q) ?? false) ||
+                (p.emailProveedor?.toLowerCase().contains(q) ?? false) ||
+                (p.direccionProveedor?.toLowerCase().contains(q) ?? false))
+            .toList();
   }
 
   Future<void> _abrirForm({Proveedor? proveedor}) async {
@@ -80,44 +88,6 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
     if (ok == true) _cargar();
   }
 
-  Future<void> _eliminar(Proveedor p) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar proveedor'),
-        content: Text('¿Eliminar "${p.nombreProveedor}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    try {
-      await _service.eliminar(p.idProveedor);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Proveedor eliminado'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      _cargar();
-    } on ProveedoresException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,11 +97,29 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
           children: [
             const AppBarSimple(title: 'Directorio de Proveedores'),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: InventorySearchBar(
                 controller: _searchCtrl,
-                hint: 'Buscar proveedor, contacto o teléfono...',
-                onChanged: (_) => _filtrar(),
+                hint: 'Buscar por Nombre, NIT o RUT...',
+                onChanged: (_) => setState(_aplicarFiltro),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _filtroActivo != null
+                    ? _chip(_filtroActivo!)
+                    : GestureDetector(
+                        onTap: () => setState(() => _filtroActivo = 'NIT'),
+                        child: Text(
+                          'Filtro: NIT',
+                          style: AppTextStyles.label.copyWith(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
               ),
             ),
             Expanded(child: _body()),
@@ -146,25 +134,40 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
     );
   }
 
+  Widget _chip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE8E0),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('Filtro: $label',
+            style: AppTextStyles.label
+                .copyWith(color: AppColors.accent, fontWeight: FontWeight.w700)),
+        const SizedBox(width: 6),
+        GestureDetector(
+          onTap: () => setState(() => _filtroActivo = null),
+          child: Icon(Icons.close, size: 16, color: AppColors.accent),
+        ),
+      ]),
+    );
+  }
+
   Widget _body() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_error!, textAlign: TextAlign.center),
-              TextButton(onPressed: _cargar, child: const Text('Reintentar')),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, textAlign: TextAlign.center),
+            TextButton(onPressed: _cargar, child: const Text('Reintentar')),
+          ],
         ),
       );
     }
-    if (_proveedores.isEmpty) {
+    if (_filtrados.isEmpty) {
       return Center(
         child: Text(
           'No hay proveedores',
@@ -176,78 +179,19 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
       onRefresh: _cargar,
       color: AppColors.primary,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-        itemCount: _proveedores.length,
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+        itemCount: _filtrados.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (context, i) {
-          final p = _proveedores[i];
-          final sub = [
-            if (p.contactoRepresentante != null &&
-                p.contactoRepresentante!.isNotEmpty)
-              p.contactoRepresentante!,
-            if (p.telefonoProveedor != null && p.telefonoProveedor!.isNotEmpty)
-              p.telefonoProveedor!,
-          ].join(' · ');
-
-          return GestureDetector(
-            onTap: () => _abrirForm(proveedor: p),
-            onLongPress: () => _eliminar(p),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.large),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.editBackground,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.local_shipping_outlined,
-                      size: 20,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.nombreProveedor,
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        if (sub.isNotEmpty)
-                          Text(
-                            sub,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        if (p.emailProveedor != null &&
-                            p.emailProveedor!.isNotEmpty)
-                          Text(
-                            p.emailProveedor!,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: AppColors.textMuted),
-                ],
-              ),
+          final p = _filtrados[i];
+          final expanded = _expandedId == p.idProveedor;
+          return ProveedorExpandableCard(
+            proveedor: p,
+            expanded: expanded,
+            onToggle: () => setState(
+              () => _expandedId = expanded ? null : p.idProveedor,
             ),
+            onEdit: () => _abrirForm(proveedor: p),
           );
         },
       ),

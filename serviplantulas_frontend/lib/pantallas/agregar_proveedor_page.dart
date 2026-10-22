@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../componentes/boton/app_button.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
+import '../componentes/proveedores/proveedor_form_body.dart';
 import '../models/proveedor.dart';
 import '../services/proveedores_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
-import '../styles/app_spacing.dart';
-import '../styles/app_text_styles.dart';
 
 class AgregarProveedorPage extends StatefulWidget {
   final Proveedor? proveedor;
-
   const AgregarProveedorPage({super.key, this.proveedor});
 
   @override
@@ -21,10 +19,12 @@ class AgregarProveedorPage extends StatefulWidget {
 class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
   final _service = ProveedoresService();
   final _nombreCtrl = TextEditingController();
-  final _contactoCtrl = TextEditingController();
+  final _nitCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _direccionCtrl = TextEditingController();
+  final _ciudadCtrl = TextEditingController();
+  final Set<String> _productosSel = {};
   bool _isLoading = false;
 
   bool get _esEdicion => widget.proveedor != null;
@@ -33,22 +33,53 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
   void initState() {
     super.initState();
     final p = widget.proveedor;
-    if (p != null) {
-      _nombreCtrl.text = p.nombreProveedor;
-      _contactoCtrl.text = p.contactoRepresentante ?? '';
-      _telCtrl.text = p.telefonoProveedor ?? '';
-      _emailCtrl.text = p.emailProveedor ?? '';
-      _direccionCtrl.text = p.direccionProveedor ?? '';
+    if (p == null) return;
+    _nombreCtrl.text = p.nombreProveedor;
+    _telCtrl.text = p.telefonoProveedor ?? '';
+    _emailCtrl.text = p.emailProveedor ?? '';
+    final dir = p.direccionProveedor;
+    if (dir != null && dir.contains(' | ')) {
+      final parts = dir.split(' | ');
+      _ciudadCtrl.text = parts.first.trim();
+      _direccionCtrl.text = parts.skip(1).join(' | ').trim();
+    } else if (dir != null) {
+      _direccionCtrl.text = dir;
     }
+    _cargarExtras(p.idProveedor);
+  }
+
+  Future<void> _cargarExtras(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _nitCtrl.text = prefs.getString('prov_nit_$id') ?? '';
+      _productosSel
+        ..clear()
+        ..addAll(prefs.getStringList('prov_prods_$id') ?? []);
+    });
+  }
+
+  Future<void> _guardarExtras(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('prov_nit_$id', _nitCtrl.text.trim());
+    await prefs.setStringList('prov_prods_$id', _productosSel.toList());
+  }
+
+  String get _dirCompleta {
+    final c = _ciudadCtrl.text.trim();
+    final d = _direccionCtrl.text.trim();
+    if (c.isNotEmpty && d.isNotEmpty) return '$c | $d';
+    return c.isNotEmpty ? c : d;
   }
 
   @override
   void dispose() {
     _nombreCtrl.dispose();
-    _contactoCtrl.dispose();
+    _nitCtrl.dispose();
     _telCtrl.dispose();
     _emailCtrl.dispose();
     _direccionCtrl.dispose();
+    _ciudadCtrl.dispose();
     super.dispose();
   }
 
@@ -58,57 +89,47 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
       _snack('El nombre / razón social es obligatorio', error: true);
       return;
     }
-
     setState(() => _isLoading = true);
     try {
+      final dir = _dirCompleta;
       if (_esEdicion) {
-        await _service.actualizar(
-          id: widget.proveedor!.idProveedor,
-          campos: {
-            'nombre_proveedor': nombre,
-            'contacto_representante': _contactoCtrl.text.trim(),
-            'telefono_proveedor': _telCtrl.text.trim(),
-            'email_proveedor': _emailCtrl.text.trim(),
-            'direccion_proveedor': _direccionCtrl.text.trim(),
-          },
-        );
+        final id = widget.proveedor!.idProveedor;
+        await _service.actualizar(id: id, campos: {
+          'nombre_proveedor': nombre,
+          'telefono_proveedor': _telCtrl.text.trim(),
+          'email_proveedor': _emailCtrl.text.trim(),
+          'direccion_proveedor': dir,
+        });
+        await _guardarExtras(id);
         if (!mounted) return;
         _snack('Proveedor actualizado');
       } else {
-        await _service.crear(
+        String? n(String s) => s.trim().isEmpty ? null : s.trim();
+        final creado = await _service.crear(
           nombreProveedor: nombre,
-          contactoRepresentante: _emptyToNull(_contactoCtrl.text),
-          telefonoProveedor: _emptyToNull(_telCtrl.text),
-          emailProveedor: _emptyToNull(_emailCtrl.text),
-          direccionProveedor: _emptyToNull(_direccionCtrl.text),
+          telefonoProveedor: n(_telCtrl.text),
+          emailProveedor: n(_emailCtrl.text),
+          direccionProveedor: dir.isEmpty ? null : dir,
         );
+        await _guardarExtras(creado.idProveedor);
         if (!mounted) return;
         _snack('Proveedor guardado');
       }
       Navigator.pop(context, true);
     } on ProveedoresException catch (e) {
-      if (!mounted) return;
-      _snack(e.message, error: true);
+      if (mounted) _snack(e.message, error: true);
     } catch (_) {
-      if (!mounted) return;
-      _snack('Error al guardar', error: true);
+      if (mounted) _snack('Error al guardar', error: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String? _emptyToNull(String s) {
-    final t = s.trim();
-    return t.isEmpty ? null : t;
-  }
-
   void _snack(String msg, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: error ? AppColors.error : AppColors.success,
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: error ? AppColors.error : AppColors.success,
+    ));
   }
 
   @override
@@ -123,85 +144,37 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _label('Nombre / Razón Social'),
-                    _field(_nombreCtrl, 'Ej. Nativo Verde S.A.'),
-                    const SizedBox(height: AppSpacing.large),
-                    _label('Persona de Contacto'),
-                    _field(_contactoCtrl, 'Nombre del contacto'),
-                    const SizedBox(height: AppSpacing.large),
-                    _label('Teléfono'),
-                    _field(
-                      _telCtrl,
-                      '300 123 4567',
-                      keyboard: TextInputType.phone,
-                    ),
-                    const SizedBox(height: AppSpacing.large),
-                    _label('Correo Electrónico'),
-                    _field(
-                      _emailCtrl,
-                      'contacto@proveedor.com',
-                      keyboard: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: AppSpacing.large),
-                    _label('Dirección'),
-                    _field(_direccionCtrl, 'Ciudad, dirección...'),
-                    const SizedBox(height: AppSpacing.extraLarge),
-                    AppButton(
-                      text: _esEdicion
-                          ? 'Guardar cambios'
-                          : 'Guardar Proveedor',
-                      isLoading: _isLoading,
-                      onPressed: _guardar,
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                child: ProveedorFormBody(
+                  nombreCtrl: _nombreCtrl,
+                  nitCtrl: _nitCtrl,
+                  telCtrl: _telCtrl,
+                  emailCtrl: _emailCtrl,
+                  direccionCtrl: _direccionCtrl,
+                  ciudadCtrl: _ciudadCtrl,
+                  productosSel: _productosSel,
+                  onToggleProducto: (p) => setState(() {
+                    if (!_productosSel.add(p)) _productosSel.remove(p);
+                  }),
                 ),
               ),
             ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                border: Border(
+                  top: BorderSide(color: AppColors.border, width: 0.5),
+                ),
+              ),
+              child: AppButton(
+                text: 'Guardar Proveedor',
+                isLoading: _isLoading,
+                onPressed: _guardar,
+              ),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _label(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          t,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-
-  Widget _field(
-    TextEditingController ctrl,
-    String hint, {
-    TextInputType keyboard = TextInputType.text,
-  }) {
-    return TextField(
-      controller: ctrl,
-      keyboardType: keyboard,
-      style: AppTextStyles.bodyMedium,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle:
-            AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
     );
