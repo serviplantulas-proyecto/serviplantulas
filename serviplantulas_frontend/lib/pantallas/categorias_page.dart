@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../componentes/categorias/categoria_color_picker.dart';
+import '../componentes/categorias/categoria_list_card.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../models/categoria.dart';
 import '../services/categorias_service.dart';
+import '../services/productos_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
 import '../styles/app_text_styles.dart';
 import 'agregar_categoria_page.dart';
 
@@ -16,20 +20,14 @@ class CategoriasPage extends StatefulWidget {
 }
 
 class _CategoriasPageState extends State<CategoriasPage> {
-  final _service = CategoriasService();
+  final _catService = CategoriasService();
+  final _prodService = ProductosService();
+
   List<Categoria> _categorias = [];
+  Map<int, int> _conteoProductos = {};
+  Map<int, int> _colores = {};
   bool _loading = true;
   String? _error;
-
-  static const _iconos = [
-    Icons.grass,
-    Icons.park,
-    Icons.local_florist,
-    Icons.eco,
-    Icons.spa,
-    Icons.home_outlined,
-    Icons.wb_cloudy_outlined,
-  ];
 
   @override
   void initState() {
@@ -43,10 +41,28 @@ class _CategoriasPageState extends State<CategoriasPage> {
       _error = null;
     });
     try {
-      final lista = await _service.listar();
+      final cats = await _catService.listar();
+      Map<int, int> conteo = {};
+      try {
+        final prods = await _prodService.listar();
+        for (final p in prods) {
+          if (p.idCategoria != null) {
+            conteo[p.idCategoria!] = (conteo[p.idCategoria!] ?? 0) + 1;
+          }
+        }
+      } catch (_) {}
+      final prefs = await SharedPreferences.getInstance();
+      final colores = <int, int>{};
+      for (final c in cats) {
+        colores[c.idCategoria] =
+            (prefs.getInt('cat_color_${c.idCategoria}') ?? 0)
+                .clamp(0, kCategoriaColores.length - 1);
+      }
       if (!mounted) return;
       setState(() {
-        _categorias = lista;
+        _categorias = cats;
+        _conteoProductos = conteo;
+        _colores = colores;
         _loading = false;
       });
     } on CategoriasException catch (e) {
@@ -95,7 +111,7 @@ class _CategoriasPageState extends State<CategoriasPage> {
     );
     if (ok != true) return;
     try {
-      await _service.eliminar(c.idCategoria);
+      await _catService.eliminar(c.idCategoria);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -143,7 +159,14 @@ class _CategoriasPageState extends State<CategoriasPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_error!, textAlign: TextAlign.center),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
               TextButton(onPressed: _cargar, child: const Text('Reintentar')),
             ],
           ),
@@ -161,64 +184,20 @@ class _CategoriasPageState extends State<CategoriasPage> {
     return RefreshIndicator(
       onRefresh: _cargar,
       color: AppColors.primary,
-      child: GridView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.25,
-        ),
         itemCount: _categorias.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (context, i) {
           final c = _categorias[i];
-          final icon = _iconos[i % _iconos.length];
-          return GestureDetector(
-            onTap: () => _abrirForm(categoria: c),
-            onLongPress: () => _eliminar(c),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.large),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 28, color: AppColors.mutedGreen),
-                  const SizedBox(height: 8),
-                  Text(
-                    c.nombreCategoria,
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (c.descripcionCategoria != null &&
-                      c.descripcionCategoria!.isNotEmpty)
-                    Text(
-                      c.descripcionCategoria!,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  const SizedBox(height: 4),
-                  Text(
-                    c.estado ? 'Activa' : 'Inactiva',
-                    style: AppTextStyles.label.copyWith(
-                      color: c.estado ? AppColors.success : AppColors.warning,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          final ci = _colores[c.idCategoria] ?? (i % kCategoriaColores.length);
+          return CategoriaListCard(
+            categoria: c,
+            productosCount: _conteoProductos[c.idCategoria] ?? 0,
+            iconBg: kCategoriaIconBg[ci],
+            iconColor: kCategoriaColores[ci],
+            onEdit: () => _abrirForm(categoria: c),
+            onDelete: () => _eliminar(c),
           );
         },
       ),

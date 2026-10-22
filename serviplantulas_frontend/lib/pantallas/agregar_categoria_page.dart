@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../componentes/boton/app_button.dart';
+import '../componentes/categorias/categoria_color_picker.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../models/categoria.dart';
 import '../services/categorias_service.dart';
@@ -22,7 +24,7 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
   final _service = CategoriasService();
   final _nombreCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  bool _estado = true;
+  int _colorIndex = 0;
   bool _isLoading = false;
 
   bool get _esEdicion => widget.categoria != null;
@@ -34,8 +36,22 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
     if (c != null) {
       _nombreCtrl.text = c.nombreCategoria;
       _descCtrl.text = c.descripcionCategoria ?? '';
-      _estado = c.estado;
+      _cargarColor(c.idCategoria);
     }
+  }
+
+  Future<void> _cargarColor(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final idx = prefs.getInt('cat_color_$id') ?? 0;
+    if (mounted) {
+      setState(() =>
+          _colorIndex = idx.clamp(0, kCategoriaColores.length - 1));
+    }
+  }
+
+  Future<void> _guardarColor(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('cat_color_$id', _colorIndex);
   }
 
   @override
@@ -55,23 +71,26 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
     setState(() => _isLoading = true);
     try {
       if (_esEdicion) {
+        final id = widget.categoria!.idCategoria;
         await _service.actualizar(
-          id: widget.categoria!.idCategoria,
+          id: id,
           campos: {
             'nombre_categoria': nombre,
             'descripcion_categoria': _descCtrl.text.trim(),
-            'estado': _estado,
+            'estado': true,
           },
         );
+        await _guardarColor(id);
         if (!mounted) return;
         _snack('Categoría actualizada');
       } else {
-        await _service.crear(
+        final creada = await _service.crear(
           nombreCategoria: nombre,
           descripcionCategoria:
               _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-          estado: _estado,
+          estado: true,
         );
+        await _guardarColor(creada.idCategoria);
         if (!mounted) return;
         _snack('Categoría creada');
       }
@@ -108,12 +127,12 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _label('Nombre de la Categoría'),
-                    _field(_nombreCtrl, 'Ej. Suculentas, Frutales...'),
+                    _field(_nombreCtrl, 'Ej. Plantas de Interior'),
                     const SizedBox(height: AppSpacing.large),
                     _label('Descripción (Opcional)'),
                     TextField(
@@ -121,32 +140,33 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
                       maxLines: 3,
                       style: AppTextStyles.bodyMedium,
                       decoration: _decoration(
-                        'Breve descripción de la categoría...',
+                        'Escribe una breve descripción para organizar los productos de esta categoría...',
                       ),
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        'Categoría activa',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      value: _estado,
-                      activeColor: AppColors.mutedGreen,
-                      onChanged: (v) => setState(() => _estado = v),
-                    ),
-                    const SizedBox(height: AppSpacing.extraLarge),
-                    AppButton(
-                      text: _esEdicion
-                          ? 'Guardar cambios'
-                          : 'Guardar Categoría',
-                      isLoading: _isLoading,
-                      onPressed: _guardar,
+                    _label('Identificador (Icono o Color)'),
+                    const SizedBox(height: 10),
+                    CategoriaColorPicker(
+                      selectedIndex: _colorIndex,
+                      onChanged: (i) => setState(() => _colorIndex = i),
                     ),
                   ],
                 ),
+              ),
+            ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                border: Border(
+                  top: BorderSide(color: AppColors.border, width: 0.5),
+                ),
+              ),
+              child: AppButton(
+                text: 'Guardar Categoría',
+                isLoading: _isLoading,
+                onPressed: _guardar,
               ),
             ),
           ],
@@ -188,6 +208,10 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.medium),
         borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderSide: const BorderSide(color: AppColors.primary),
       ),
     );
   }
