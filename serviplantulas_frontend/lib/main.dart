@@ -46,3 +46,5 @@ class MainApp extends StatelessWidget {
 //comando del token ngrok config add-authtoken 3L3KIYhhybxJYXmSMVStIIRxDZW_ttp6Qj9TW5b1q7nfUtay
 //habilitar la puerta de enlace  ngrok http 3000
 //pagina del ngrok: https://dashboard.ngrok.com/
+//comando para compilar el proyecto a apk: flutter build apk --debug --dart-define=API_BASE_URL=https://surging-gaffe-shell.ngrok-free.dev
+//se guarda en la carpeta \build\app\outputs\apk\debug\"archivo.apk"
