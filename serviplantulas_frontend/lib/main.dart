@@ -34,7 +34,7 @@ class MainApp extends StatelessWidget {
 //comando para iniciar con opera |°/- $env:CHROME_EXECUTABLE="C:\Users\FINISTERRA\AppData\Local\Programs\Opera GX\opera.exe" -\°|
 //guia del panel administrativo  |°/- https://jlombanar.github.io/adso_3169657/ -\°|
 
-//pantallas para reducir(sacar widgets): detalle_producto_page.dart, analisis_ventas_page.dart, registro_venta_page.dart, registrar_producto_page.dart, inventario_page.dart, directorio_proveedores_page.dart, categorias_page.dart, agregar_proveedor_page.dart, generar_factura_page.dart, chat_eva_page.dart y mi_cuenta_page.dart, verificar "editar planta" del frontend- inventario
+//pantallas para reducir(sacar widgets): detalle_producto_page.dart, analisis_ventas_page.dart, registro_venta_page.dart, registrar_producto_page.dart, inventario_page.dart, directorio_proveedores_page.dart, categorias_page.dart, agregar_proveedor_page.dart, generar_factura_page.dart, chat_eva_page.dart, mi_cuenta_page.dart.
 
 //configirar permisos y credenciales del github:
 //PS D:\Programacion\web-adso> git config --global user.name "serviplantulas-proyecto"
@@ -43,8 +43,8 @@ class MainApp extends StatelessWidget {
 
 //comandos para elevar sv, apk:
 //dependencia para instalar: npm install -g ngrok
-//comando del token ngrok config add-authtoken 3L3KIYhhybxJYXmSMVStIIRxDZW_ttp6Qj9TW5b1q7nfUtay
-//habilitar la puerta de enlace  ngrok http 3000
+//comando del token: ngrok config add-authtoken 3L3KIYhhybxJYXmSMVStIIRxDZW_ttp6Qj9TW5b1q7nfUtay
+//habilitar la puerta de enlace:  ngrok http 3000
 //pagina del ngrok: https://dashboard.ngrok.com/
 //comando para compilar el proyecto a apk: flutter build apk --debug --dart-define=API_BASE_URL=https://surging-gaffe-shell.ngrok-free.dev
 //se guarda en la carpeta \build\app\outputs\apk\debug\"archivo.apk"

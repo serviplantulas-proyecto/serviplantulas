@@ -1,66 +1,178 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
 import '../models/cliente.dart';
+import 'api_config.dart';
 
-/// Servicio de clientes.
-/// Datos mock por ahora. Conectar al backend cuando esté listo.
+class ClientesException implements Exception {
+  final String message;
+  const ClientesException(this.message);
+  @override
+  String toString() => message;
+}
+
 class ClientesService {
-  // TODO: ApiConfig.baseUrl + 'clientes'
-
-  Future<List<Cliente>> obtenerClientes({String? busqueda}) async {
-    await Future.delayed(const Duration(milliseconds: 250));
-
-    var lista = _mockClientes;
+  Future<List<Cliente>> listar({String? busqueda}) async {
+    final decoded = await _get(Uri.parse(ApiConfig.clientesUrl));
+    var lista = _asList(decoded).map(Cliente.fromJson).toList();
     if (busqueda != null && busqueda.trim().isNotEmpty) {
       final q = busqueda.toLowerCase();
       lista = lista
           .where((c) =>
-              c.nombre.toLowerCase().contains(q) ||
-              c.documento.contains(q))
+              c.nombreCliente.toLowerCase().contains(q) ||
+              (c.cedulaCliente?.toLowerCase().contains(q) ?? false) ||
+              (c.telefonoCliente?.contains(q) ?? false))
           .toList();
     }
     return lista;
   }
 
-  static const List<Cliente> _mockClientes = [
-    Cliente(
-      id: 'C001',
-      nombre: 'Carlos Restrepo Restrepo',
-      documento: '1045.230.981',
-      tipoDocumento: 'C.C.',
-      telefono: '+57 312 450 9081',
-      totalPedidos: 14,
-      ultimoAcceso: '08 Oct 2023',
-      descuentoFrecuente: 5,
-      historialReciente: [
-        PedidoResumen(
-          facturaId: 'FACT-1042',
-          descripcion: '3x Helechos',
-          total: 67500,
-        ),
-        PedidoResumen(
-          facturaId: 'FACT-0982',
-          descripcion: '1x Abono Orgánico',
-          total: 15000,
-        ),
-      ],
-    ),
-    Cliente(
-      id: 'C002',
-      nombre: 'Diana María Gómez Trujillo',
-      documento: '32.540.912',
-      tipoDocumento: 'C.C.',
-      telefono: '+57 300 123 4567',
-      totalPedidos: 7,
-      ultimoAcceso: '02 Oct 2023',
-    ),
-    Cliente(
-      id: 'C003',
-      nombre: 'Inversiones del Bosque S.A.S',
-      documento: '900.231.412-1',
-      tipoDocumento: 'NIT',
-      telefono: '+57 601 555 0101',
-      totalPedidos: 22,
-      ultimoAcceso: '05 Oct 2023',
-      descuentoFrecuente: 8,
-    ),
-  ];
+  /// Alias usado por pantallas antiguas.
+  Future<List<Cliente>> obtenerClientes({String? busqueda}) =>
+      listar(busqueda: busqueda);
+
+  Future<Cliente> obtenerPorId(int id) async {
+    final decoded =
+        await _get(Uri.parse('${ApiConfig.clientesUrl}$id'));
+    if (decoded is! Map<String, dynamic>) {
+      throw const ClientesException('Respuesta inválida.');
+    }
+    return Cliente.fromJson(decoded);
+  }
+
+  Future<Cliente> crear({
+    required String nombreCliente,
+    required String telefonoCliente,
+    String? correoCliente,
+    String? direccionCliente,
+    String? cedulaCliente,
+  }) async {
+    final body = {
+      'nombre_cliente': nombreCliente,
+      'telefono_cliente': telefonoCliente,
+      if (correoCliente != null) 'correo_cliente': correoCliente,
+      if (direccionCliente != null) 'direccion_cliente': direccionCliente,
+      if (cedulaCliente != null) 'cedula_cliente': cedulaCliente,
+    };
+    final decoded = await _post(Uri.parse(ApiConfig.clientesUrl), body);
+    return _extraer(decoded);
+  }
+
+  Future<Cliente> actualizar({
+    required int id,
+    required Map<String, dynamic> campos,
+  }) async {
+    final decoded =
+        await _put(Uri.parse('${ApiConfig.clientesUrl}$id'), campos);
+    return _extraer(decoded);
+  }
+
+  Future<void> eliminar(int id) async {
+    await _delete(Uri.parse('${ApiConfig.clientesUrl}$id'));
+  }
+
+  Cliente _extraer(dynamic decoded) {
+    if (decoded is Map && decoded['cliente'] is Map) {
+      return Cliente.fromJson(
+          Map<String, dynamic>.from(decoded['cliente'] as Map));
+    }
+    if (decoded is Map<String, dynamic>) return Cliente.fromJson(decoded);
+    throw const ClientesException('Respuesta inválida del servidor.');
+  }
+
+  Future<dynamic> _get(Uri uri) async {
+    try {
+      final r = await http
+          .get(uri, headers: ApiConfig.headers)
+          .timeout(const Duration(seconds: 15));
+      final d = _decode(r);
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        throw ClientesException(_err(d, 'Error al listar clientes.'));
+      }
+      return d;
+    } on SocketException {
+      throw const ClientesException('Sin conexión con el servidor.');
+    } on TimeoutException {
+      throw const ClientesException('El servidor no respondió a tiempo.');
+    }
+  }
+
+  Future<dynamic> _post(Uri uri, Map<String, dynamic> body) async {
+    try {
+      final r = await http
+          .post(uri, headers: ApiConfig.headers, body: jsonEncode(body))
+          .timeout(const Duration(seconds: 15));
+      final d = _decode(r);
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        throw ClientesException(_err(d, 'No se pudo crear el cliente.'));
+      }
+      return d;
+    } on SocketException {
+      throw const ClientesException('Sin conexión con el servidor.');
+    } on TimeoutException {
+      throw const ClientesException('El servidor no respondió a tiempo.');
+    }
+  }
+
+  Future<dynamic> _put(Uri uri, Map<String, dynamic> body) async {
+    try {
+      final r = await http
+          .put(uri, headers: ApiConfig.headers, body: jsonEncode(body))
+          .timeout(const Duration(seconds: 15));
+      final d = _decode(r);
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        throw ClientesException(_err(d, 'No se pudo actualizar el cliente.'));
+      }
+      return d;
+    } on SocketException {
+      throw const ClientesException('Sin conexión con el servidor.');
+    } on TimeoutException {
+      throw const ClientesException('El servidor no respondió a tiempo.');
+    }
+  }
+
+  Future<void> _delete(Uri uri) async {
+    try {
+      final r = await http
+          .delete(uri, headers: ApiConfig.headers)
+          .timeout(const Duration(seconds: 15));
+      final d = _decode(r);
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        throw ClientesException(_err(d, 'No se pudo eliminar el cliente.'));
+      }
+    } on SocketException {
+      throw const ClientesException('Sin conexión con el servidor.');
+    } on TimeoutException {
+      throw const ClientesException('El servidor no respondió a tiempo.');
+    }
+  }
+
+  dynamic _decode(http.Response r) {
+    if (r.body.isEmpty) return null;
+    try {
+      return jsonDecode(utf8.decode(r.bodyBytes));
+    } on FormatException {
+      throw const ClientesException('Respuesta no válida del servidor.');
+    }
+  }
+
+  List<Map<String, dynamic>> _asList(dynamic d) {
+    if (d is List) {
+      return d
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+    return const [];
+  }
+
+  String _err(dynamic d, String fallback) {
+    if (d is Map && d['error'] is String && (d['error'] as String).isNotEmpty) {
+      return d['error'] as String;
+    }
+    return fallback;
+  }
 }

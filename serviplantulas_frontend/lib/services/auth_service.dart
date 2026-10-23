@@ -164,6 +164,41 @@ class AuthService {
           'No se pudo guardar la sesión en este dispositivo.',
         );
       }
+
+      // Guardar datos del usuario para Mi Cuenta
+      final u = decoded['usuario'];
+      if (u is Map) {
+        await preferences.setString(
+          'user_email',
+          (u['email'] ?? email).toString(),
+        );
+        await preferences.setString(
+          'user_nombre',
+          (u['nombre'] ?? '').toString(),
+        );
+        await preferences.setString(
+          'user_apellido',
+          (u['apellido'] ?? '').toString(),
+        );
+        await preferences.setString(
+          'user_rol',
+          (u['rol'] ?? 'usuario').toString(),
+        );
+        if (u['telefono'] != null) {
+          await preferences.setString(
+            'user_telefono',
+            u['telefono'].toString(),
+          );
+        }
+        if (u['id'] != null) {
+          await preferences.setInt(
+            'user_id',
+            int.tryParse(u['id'].toString()) ?? 0,
+          );
+        }
+      } else {
+        await preferences.setString('user_email', email);
+      }
     } on PlatformException {
       throw const AuthException(
         'No se pudo guardar la sesión en este dispositivo.',

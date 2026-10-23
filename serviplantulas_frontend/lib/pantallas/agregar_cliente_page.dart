@@ -1,27 +1,46 @@
 import 'package:flutter/material.dart';
 
 import '../componentes/boton/app_button.dart';
+import '../componentes/clientes/cliente_form_fields.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
+import '../models/cliente.dart';
+import '../services/clientes_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
-import '../styles/app_text_styles.dart';
 
 class AgregarClientePage extends StatefulWidget {
-  const AgregarClientePage({super.key});
+  final Cliente? cliente;
+
+  const AgregarClientePage({super.key, this.cliente});
 
   @override
   State<AgregarClientePage> createState() => _AgregarClientePageState();
 }
 
 class _AgregarClientePageState extends State<AgregarClientePage> {
+  final _service = ClientesService();
   final _nombreCtrl = TextEditingController();
   final _docCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _dirCtrl = TextEditingController();
-  String _tipoDoc = 'Cédula (C.C.)';
+  bool _esCedula = true;
   bool _isLoading = false;
+
+  bool get _esEdicion => widget.cliente != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final c = widget.cliente;
+    if (c == null) return;
+    _nombreCtrl.text = c.nombreCliente;
+    _docCtrl.text = c.cedulaCliente ?? '';
+    _telCtrl.text = (c.telefonoCliente ?? '').replaceFirst('+57 ', '');
+    _emailCtrl.text = c.correoCliente ?? '';
+    _dirCtrl.text = c.direccionCliente ?? '';
+    _esCedula = c.tipoDocumento != 'NIT';
+  }
 
   @override
   void dispose() {
@@ -33,20 +52,58 @@ class _AgregarClientePageState extends State<AgregarClientePage> {
     super.dispose();
   }
 
-  void _guardar() {
-    // TODO: POST /clientes
+  Future<void> _guardar() async {
+    final nombre = _nombreCtrl.text.trim();
+    final tel = _telCtrl.text.trim();
+    if (nombre.isEmpty || tel.isEmpty) {
+      _snack('Nombre y teléfono son obligatorios', error: true);
+      return;
+    }
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cliente guardado (mock)'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.pop(context);
-    });
+    try {
+      final doc = _docCtrl.text.trim();
+      final email = _emailCtrl.text.trim();
+      final dir = _dirCtrl.text.trim();
+      final telFull = tel.startsWith('+') ? tel : tel;
+      if (_esEdicion) {
+        await _service.actualizar(
+          id: widget.cliente!.idCliente,
+          campos: {
+            'nombre_cliente': nombre,
+            'telefono_cliente': telFull,
+            'correo_cliente': email,
+            'direccion_cliente': dir,
+            'cedula_cliente': doc,
+          },
+        );
+        if (!mounted) return;
+        _snack('Cliente actualizado');
+      } else {
+        await _service.crear(
+          nombreCliente: nombre,
+          telefonoCliente: telFull,
+          correoCliente: email.isEmpty ? null : email,
+          direccionCliente: dir.isEmpty ? null : dir,
+          cedulaCliente: doc.isEmpty ? null : doc,
+        );
+        if (!mounted) return;
+        _snack('Cliente guardado');
+      }
+      Navigator.pop(context, true);
+    } on ClientesException catch (e) {
+      if (mounted) _snack(e.message, error: true);
+    } catch (_) {
+      if (mounted) _snack('Error al guardar', error: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _snack(String msg, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: error ? AppColors.error : AppColors.success,
+    ));
   }
 
   @override
@@ -56,143 +113,77 @@ class _AgregarClientePageState extends State<AgregarClientePage> {
       body: SafeArea(
         child: Column(
           children: [
-            const AppBarSimple(title: 'Agregar Cliente'),
+            AppBarSimple(
+              title: _esEdicion ? 'Editar Cliente' : 'Agregar Cliente',
+            ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label('Nombre Completo'),
-                    _field(
-                      _nombreCtrl,
-                      'Ej. Juan Carlos Pérez',
+                    const ClienteFormLabel('Nombre Completo'),
+                    ClienteFormField(
+                      controller: _nombreCtrl,
+                      hint: 'Ej. Juan Carlos Pérez',
                       icon: Icons.person_outline,
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Documento de Identidad'),
-                    _tipoDocToggle(),
+                    const ClienteFormLabel('Documento de Identidad'),
+                    ClienteTipoDocToggle(
+                      esCedula: _esCedula,
+                      onChanged: (v) => setState(() => _esCedula = v),
+                    ),
                     const SizedBox(height: 8),
-                    _field(_docCtrl, 'Número de documento (sin puntos)'),
+                    ClienteFormField(
+                      controller: _docCtrl,
+                      hint: 'Número de documento (sin puntos)',
+                      keyboard: TextInputType.number,
+                    ),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Teléfono Móvil'),
-                    _field(
-                      _telCtrl,
-                      '300 123 4567',
+                    const ClienteFormLabel('Teléfono Móvil'),
+                    ClienteFormField(
+                      controller: _telCtrl,
+                      hint: '300 123 4567',
                       prefix: '+57 ',
                       keyboard: TextInputType.phone,
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Correo Electrónico'),
-                    _field(
-                      _emailCtrl,
-                      'correo@ejemplo.com',
+                    const ClienteFormLabel('Correo Electrónico'),
+                    ClienteFormField(
+                      controller: _emailCtrl,
+                      hint: 'correo@ejemplo.com',
                       icon: Icons.email_outlined,
                       keyboard: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Dirección de Envío'),
-                    _field(
-                      _dirCtrl,
-                      'Calle, Carrera, Barrio, Ciudad',
+                    const ClienteFormLabel('Dirección de Envío'),
+                    ClienteFormField(
+                      controller: _dirCtrl,
+                      hint: 'Calle, Carrera, Barrio, Ciudad',
                       icon: Icons.location_on_outlined,
-                    ),
-                    const SizedBox(height: AppSpacing.extraLarge),
-                    AppButton(
-                      text: 'Guardar Cliente',
-                      icon: Icons.check,
-                      isLoading: _isLoading,
-                      onPressed: _guardar,
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tipoDocToggle() {
-    return Row(
-      children: [
-        _chip('Cédula (C.C.)'),
-        const SizedBox(width: 8),
-        _chip('NIT'),
-      ],
-    );
-  }
-
-  Widget _chip(String label) {
-    final selected = _tipoDoc == label;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _tipoDoc = label),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.primary : AppColors.neutral,
-            borderRadius: BorderRadius.circular(AppRadius.medium),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: selected ? AppColors.surface : AppColors.textSecondary,
-              fontWeight: FontWeight.w700,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                border: Border(
+                  top: BorderSide(color: AppColors.border, width: 0.5),
+                ),
+              ),
+              child: AppButton(
+                text: 'Guardar Cliente',
+                icon: Icons.check,
+                isLoading: _isLoading,
+                onPressed: _guardar,
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _label(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          t,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-
-  Widget _field(
-    TextEditingController ctrl,
-    String hint, {
-    IconData? icon,
-    String? prefix,
-    TextInputType keyboard = TextInputType.text,
-  }) {
-    return TextField(
-      controller: ctrl,
-      keyboardType: keyboard,
-      style: AppTextStyles.bodyMedium,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle:
-            AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-        prefixIcon: icon != null
-            ? Icon(icon, size: 18, color: AppColors.textMuted)
-            : null,
-        prefixText: prefix,
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          borderSide: const BorderSide(color: AppColors.primary),
+          ],
         ),
       ),
     );

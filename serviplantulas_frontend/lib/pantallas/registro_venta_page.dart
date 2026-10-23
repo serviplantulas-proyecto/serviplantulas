@@ -23,21 +23,19 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
   final _productoSearchCtrl = TextEditingController();
 
   // Mock clientes — más adelante GET /clientes
-  static const _clientesMock = [
+    static const _clientesMock = [
     Cliente(
-      id: 'C001',
-      nombre: 'Carlos Restrepo',
-      documento: '1045230981',
-      tipoDocumento: 'C.C.',
-      telefono: '+57 312 450 9081',
+      idCliente: 1,
+      nombreCliente: 'Carlos Restrepo',
+      cedulaCliente: '1045230981',
+      telefonoCliente: '+57 312 450 9081',
       descuentoFrecuente: 5,
     ),
     Cliente(
-      id: 'C002',
-      nombre: 'María López',
-      documento: '52987654',
-      tipoDocumento: 'C.C.',
-      telefono: '+57 300 111 2233',
+      idCliente: 2,
+      nombreCliente: 'María López',
+      cedulaCliente: '52987654',
+      telefonoCliente: '+57 300 111 2233',
       descuentoFrecuente: 0,
     ),
   ];

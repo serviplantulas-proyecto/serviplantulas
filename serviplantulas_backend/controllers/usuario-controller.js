@@ -244,6 +244,7 @@ export const login = async (req, res) => {
                 nombre: usuario.nombre_usuarios,
                 apellido: usuario.apellido_usuarios,
                 email: usuario.email_usuarios,
+                telefono: usuario.telefono_usuarios,
                 rol: usuario.rol_usuarios
 
             }

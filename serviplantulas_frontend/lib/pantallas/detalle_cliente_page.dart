@@ -1,170 +1,149 @@
 import 'package:flutter/material.dart';
 
+import '../componentes/boton/app_button.dart';
+import '../componentes/clientes/cliente_detalle_info.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../models/cliente.dart';
+import '../services/clientes_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
-import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
+import 'agregar_cliente_page.dart';
 
-class DetalleClientePage extends StatelessWidget {
+class DetalleClientePage extends StatefulWidget {
   final Cliente cliente;
 
   const DetalleClientePage({super.key, required this.cliente});
 
-  String _money(double v) {
-    final s = v.toStringAsFixed(0);
-    final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-      buf.write(s[i]);
+  @override
+  State<DetalleClientePage> createState() => _DetalleClientePageState();
+}
+
+class _DetalleClientePageState extends State<DetalleClientePage> {
+  final _service = ClientesService();
+  late Cliente _cliente;
+  bool _eliminando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cliente = widget.cliente;
+  }
+
+  Future<void> _editar() async {
+    final ok = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AgregarClientePage(cliente: _cliente),
+      ),
+    );
+    if (ok == true && mounted) {
+      try {
+        final actualizado = await _service.obtenerPorId(_cliente.idCliente);
+        setState(() => _cliente = actualizado);
+      } catch (_) {}
     }
-    return '\$${buf.toString()}';
+  }
+
+  Future<void> _eliminar() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar cliente'),
+        content: Text('¿Eliminar a "${_cliente.nombre}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _eliminando = true);
+    try {
+      await _service.eliminar(_cliente.idCliente);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Cliente eliminado'),
+        backgroundColor: AppColors.success,
+      ));
+      Navigator.pop(context, true);
+    } on ClientesException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _eliminando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = _cliente;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            const AppBarSimple(title: 'Detalle de Cliente'),
+            const AppBarSimple(title: 'Detalle del Cliente'),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 32,
-                            backgroundColor: AppColors.editBackground,
-                            child: Text(
-                              cliente.nombre.isNotEmpty
-                                  ? cliente.nombre[0].toUpperCase()
-                                  : '?',
-                              style: AppTextStyles.titleMedium.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            cliente.nombre,
-                            style: AppTextStyles.titleSmall.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            '${cliente.tipoDocumento} ${cliente.documento}',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
+                    ClienteDetalleInfo(cliente: c),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Últimas Compras',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.extraLarge),
-                    _infoCard([
-                      _row('Teléfono', cliente.telefono ?? '—'),
-                      _row('Total pedidos', '${cliente.totalPedidos}'),
-                      _row('Último acceso', cliente.ultimoAcceso ?? '—'),
-                      if (cliente.descuentoFrecuente > 0)
-                        _row(
-                          'Descuento frecuente',
-                          '${cliente.descuentoFrecuente.toStringAsFixed(0)}%',
-                        ),
-                    ]),
-                    if (cliente.historialReciente.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.extraLarge),
+                    const SizedBox(height: 12),
+                    if (c.historialReciente.isEmpty)
                       Text(
-                        'Historial reciente',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                        'Sin compras registradas',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textMuted,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...cliente.historialReciente.map(
-                        (p) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.medium),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '#${p.facturaId} · ${p.descripcion}',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                ),
-                                Text(
-                                  _money(p.total),
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      )
+                    else
+                      ...c.historialReciente
+                          .map((p) => ClienteCompraItem(pedido: p)),
+                    const SizedBox(height: 28),
+                    AppButton(
+                      text: 'Editar Datos del Cliente',
+                      onPressed: _editar,
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: _eliminando ? null : _eliminar,
+                        child: Text(
+                          _eliminando ? 'Eliminando...' : 'Eliminar Cliente',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _infoCard(List<Widget> children) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _row(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }
