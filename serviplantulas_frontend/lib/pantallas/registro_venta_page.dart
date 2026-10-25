@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../componentes/boton/app_button.dart';
+import '../componentes/ventas/registro_venta_controller.dart';
 import '../componentes/ventas/venta_cliente_section.dart';
 import '../componentes/ventas/venta_productos_section.dart';
 import '../componentes/ventas/venta_totales.dart';
 import '../models/cliente.dart';
 import '../models/producto.dart';
-import 'agregar_cliente_page.dart';
+import '../services/pedidos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
+import 'agregar_cliente_page.dart';
 
 class RegistroVentaPage extends StatefulWidget {
   const RegistroVentaPage({super.key});
@@ -19,68 +21,27 @@ class RegistroVentaPage extends StatefulWidget {
 }
 
 class _RegistroVentaPageState extends State<RegistroVentaPage> {
+  final _ctrl = RegistroVentaController();
   final _clienteSearchCtrl = TextEditingController();
   final _productoSearchCtrl = TextEditingController();
 
-  // Mock clientes — más adelante GET /clientes
-    static const _clientesMock = [
-    Cliente(
-      idCliente: 1,
-      nombreCliente: 'Carlos Restrepo',
-      cedulaCliente: '1045230981',
-      telefonoCliente: '+57 312 450 9081',
-      descuentoFrecuente: 5,
-    ),
-    Cliente(
-      idCliente: 2,
-      nombreCliente: 'María López',
-      cedulaCliente: '52987654',
-      telefonoCliente: '+57 300 111 2233',
-      descuentoFrecuente: 0,
-    ),
-  ];
-
-  // Mock productos con el constructor nuevo (campos del backend)
-  static const _productosMock = [
-    Producto(
-      idProducto: 1,
-      nombreProducto: "Helecho Boston Maceta 10''",
-      precioProducto: 22500,
-      stock: 124,
-      stockMinimo: 10,
-      nombreCategoria: 'Helechos',
-      nombreProveedor: 'Nativo Verde S.A.',
-    ),
-    Producto(
-      idProducto: 2,
-      nombreProducto: 'Cuna de Moisés (Spathiphyllum)',
-      precioProducto: 18000,
-      stock: 82,
-      stockMinimo: 10,
-      nombreCategoria: 'Sombra',
-      nombreProveedor: 'Floricultura del Valle',
-    ),
-    Producto(
-      idProducto: 3,
-      nombreProducto: 'Anturio Rojo Maceta 6"',
-      precioProducto: 15000,
-      stock: 56,
-      stockMinimo: 5,
-      nombreCategoria: 'Florales',
-      nombreProveedor: 'Nativo Verde S.A.',
-    ),
-  ];
-
-  Cliente? _cliente;
   List<Cliente> _sugerenciasCliente = [];
   List<Producto> _sugerenciasProducto = [];
-  final List<ItemVenta> _items = [];
   bool _isLoading = false;
+  bool _cargandoCatalogo = true;
 
-  double get _subtotal => _items.fold(0.0, (s, i) => s + i.subtotal);
-  double get _descuento =>
-      _subtotal * ((_cliente?.descuentoFrecuente ?? 0) / 100);
-  double get _total => _subtotal - _descuento;
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      await _ctrl.cargarCatalogo();
+    } catch (_) {}
+    if (mounted) setState(() => _cargandoCatalogo = false);
+  }
 
   @override
   void dispose() {
@@ -89,94 +50,27 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
     super.dispose();
   }
 
-  void _onClienteSearch(String q) {
-    final query = q.trim().toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _sugerenciasCliente = [];
-      } else {
-        // TODO: GET /clientes?q=...
-        _sugerenciasCliente = _clientesMock
-            .where(
-              (c) =>
-                  c.nombre.toLowerCase().contains(query) ||
-                  c.documento.contains(query),
-            )
-            .toList();
-      }
-    });
+  void _snack(String m, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(m),
+      backgroundColor: error ? AppColors.error : AppColors.success,
+    ));
   }
 
-  void _seleccionarCliente(Cliente c) {
-    setState(() {
-      _cliente = c;
-      _clienteSearchCtrl.text =
-          '${c.tipoDocumento} ${c.documento} - ${c.nombre}';
-      _sugerenciasCliente = [];
-    });
-  }
-
-  void _onProductoSearch(String q) {
-    final query = q.trim().toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _sugerenciasProducto = [];
-      } else {
-        // TODO: GET /productos/productos (ProductosService.listar)
-        _sugerenciasProducto = _productosMock
-            .where((p) => p.nombre.toLowerCase().contains(query))
-            .toList();
-      }
-    });
-  }
-
-  void _seleccionarProducto(Producto p) {
-    setState(() {
-      final idx = _items.indexWhere((i) => i.producto.id == p.id);
-      if (idx >= 0) {
-        _items[idx] = _items[idx].copyWith(cantidad: _items[idx].cantidad + 1);
-      } else {
-        _items.add(ItemVenta(producto: p, cantidad: 1));
-      }
-      _productoSearchCtrl.clear();
-      _sugerenciasProducto = [];
-    });
-  }
-
-  void _cambiarCantidad(int index, int delta) {
-    setState(() {
-      final nueva = _items[index].cantidad + delta;
-      if (nueva <= 0) {
-        _items.removeAt(index);
-      } else {
-        _items[index] = _items[index].copyWith(cantidad: nueva);
-      }
-    });
-  }
-
-  void _registrarVenta() {
-    if (_cliente == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona un cliente'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-    // TODO: POST /pedidos al backend
+  Future<void> _registrar() async {
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      final id = await _ctrl.registrar();
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Venta registrada (mock)'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.pop(context);
-    });
+      _snack('Venta #$id registrada');
+      Navigator.pop(context, true);
+    } on PedidosException catch (e) {
+      if (mounted) _snack(e.message, error: true);
+    } catch (_) {
+      if (mounted) _snack('Error al registrar la venta', error: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -186,7 +80,8 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            _appBar(),
+            if (_cargandoCatalogo) const LinearProgressIndicator(minHeight: 2),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -194,36 +89,56 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     VentaClienteSection(
-                      cliente: _cliente,
+                      cliente: _ctrl.cliente,
                       searchController: _clienteSearchCtrl,
                       sugerencias: _sugerenciasCliente,
-                      onNuevoCliente: () {
-                        Navigator.push(
+                      onNuevoCliente: () async {
+                        final ok = await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const AgregarClientePage(),
                           ),
                         );
+                        if (ok == true) _cargar();
                       },
-                      onSearchChanged: _onClienteSearch,
-                      onClienteSeleccionado: _seleccionarCliente,
+                      onSearchChanged: (q) => setState(
+                        () => _sugerenciasCliente = _ctrl.filtrarClientes(q),
+                      ),
+                      onClienteSeleccionado: (c) {
+                        setState(() {
+                          _ctrl.seleccionarCliente(c);
+                          _clienteSearchCtrl.text =
+                              '${c.tipoDocumento} ${c.documento} - ${c.nombre}';
+                          _sugerenciasCliente = [];
+                        });
+                      },
                       onClearSearch: () {
                         setState(() {
                           _clienteSearchCtrl.clear();
                           _sugerenciasCliente = [];
-                          _cliente = null;
+                          _ctrl.limpiarCliente();
                         });
                       },
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     VentaProductosSection(
-                      items: _items,
+                      items: _ctrl.items,
                       searchController: _productoSearchCtrl,
                       sugerencias: _sugerenciasProducto,
-                      onIncrement: (i) => _cambiarCantidad(i, 1),
-                      onDecrement: (i) => _cambiarCantidad(i, -1),
-                      onSearchChanged: _onProductoSearch,
-                      onProductoSeleccionado: _seleccionarProducto,
+                      onIncrement: (i) =>
+                          setState(() => _ctrl.cambiarCantidad(i, 1)),
+                      onDecrement: (i) =>
+                          setState(() => _ctrl.cambiarCantidad(i, -1)),
+                      onSearchChanged: (q) => setState(
+                        () => _sugerenciasProducto = _ctrl.filtrarProductos(q),
+                      ),
+                      onProductoSeleccionado: (p) {
+                        setState(() {
+                          _ctrl.agregarProducto(p);
+                          _productoSearchCtrl.clear();
+                          _sugerenciasProducto = [];
+                        });
+                      },
                       onClearSearch: () {
                         setState(() {
                           _productoSearchCtrl.clear();
@@ -233,10 +148,11 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     VentaTotales(
-                      subtotal: _subtotal,
-                      descuento: _descuento,
-                      total: _total,
-                      porcentajeDescuento: _cliente?.descuentoFrecuente ?? 0,
+                      subtotal: _ctrl.subtotal,
+                      descuento: _ctrl.descuento,
+                      total: _ctrl.total,
+                      porcentajeDescuento:
+                          _ctrl.cliente?.descuentoFrecuente ?? 0,
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
                     AppButton(
@@ -244,7 +160,8 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                       type: AppButtonType.accent,
                       icon: Icons.check,
                       isLoading: _isLoading,
-                      onPressed: _items.isEmpty ? null : _registrarVenta,
+                      onPressed:
+                          _ctrl.items.isEmpty ? null : _registrar,
                     ),
                   ],
                 ),
@@ -256,7 +173,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _appBar() {
     return Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 12),

@@ -37,6 +37,13 @@ class ApiConfig {
   // ── Clientes ──
   static String get clientesUrl => '${_apiHost}clientes/';
 
+    // ── Pedidos / ventas ──
+  static String get pedidosUrl => '${_apiHost}pedidos/';
+  static String pedidoByIdUrl(int id) => '${pedidosUrl}$id';
+  static String get detallePedidosUrl => '${_apiHost}detalle-pedidos/';
+  static String detallesPorPedidoUrl(int idPedido) =>
+      '${detallePedidosUrl}pedido/$idPedido';
+
   static String get _apiHost {
     if (_apiBaseUrlOverride.isNotEmpty) {
       return _apiBaseUrlOverride.endsWith('/')

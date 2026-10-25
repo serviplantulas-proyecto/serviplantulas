@@ -7,21 +7,39 @@ enum AnalisisVista { diario, semanal, mensual }
 
 class AnalisisGranularidad extends StatelessWidget {
   final AnalisisVista vista;
+  final DateTime mes;
   final ValueChanged<AnalisisVista> onVistaChanged;
-  final int? diaSeleccionado; // 1..7 en modo diario
-  final int? semanaSeleccionada; // 1..4 en modo semanal
+  final int? diaSeleccionado; // día del mes 1..31
+  final int? semanaSeleccionada; // 1..5
   final ValueChanged<int>? onDiaChanged;
   final ValueChanged<int>? onSemanaChanged;
 
   const AnalisisGranularidad({
     super.key,
     required this.vista,
+    required this.mes,
     required this.onVistaChanged,
     this.diaSeleccionado,
     this.semanaSeleccionada,
     this.onDiaChanged,
     this.onSemanaChanged,
   });
+
+  int get _diasMes => DateTime(mes.year, mes.month + 1, 0).day;
+
+  int get _numSemanas => ((_diasMes - 1) ~/ 7) + 1;
+
+  /// Rango de fechas de la semana n (1-based) dentro del mes.
+  (int, int) _rangoSemana(int semana) {
+    final inicio = (semana - 1) * 7 + 1;
+    final fin = (inicio + 6).clamp(1, _diasMes);
+    return (inicio, fin);
+  }
+
+  static const _mesesCortos = [
+    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -39,27 +57,32 @@ class AnalisisGranularidad extends StatelessWidget {
         ),
         if (vista == AnalisisVista.diario) ...[
           const SizedBox(height: 12),
-          _subLabel('Día de la semana (1–7)'),
+          _subLabel(
+            'Día de ${_mesesCortos[mes.month - 1]} ${mes.year} '
+            '(${diaSeleccionado ?? 1}/$_diasMes)',
+          ),
           const SizedBox(height: 8),
           _scrollChips(
-            count: 7,
+            count: _diasMes,
             selected: diaSeleccionado ?? 1,
-            labelBuilder: (i) => 'D$i',
+            labelBuilder: (i) => '$i',
             onSelect: onDiaChanged,
           ),
         ],
         if (vista == AnalisisVista.semanal) ...[
           const SizedBox(height: 12),
-          _subLabel('Semana del mes'),
+          _subLabel('Semana de ${_mesesCortos[mes.month - 1]}'),
           const SizedBox(height: 8),
           _scrollChips(
-            count: 4,
+            count: _numSemanas,
             selected: semanaSeleccionada ?? 1,
-            labelBuilder: (i) => 'Semana $i',
+            labelBuilder: (i) {
+              final (a, b) = _rangoSemana(i);
+              return 'S$i · $a–$b';
+            },
             onSelect: onSemanaChanged,
           ),
         ],
-        // Mensual: sin sub-selector (el mes ya se eligió arriba)
       ],
     );
   }
@@ -119,7 +142,7 @@ class AnalisisGranularidad extends StatelessWidget {
               onTap: () => onSelect?.call(value),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSel ? AppColors.mutedGreen : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),

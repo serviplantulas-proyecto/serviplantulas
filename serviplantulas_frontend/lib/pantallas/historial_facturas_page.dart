@@ -4,6 +4,8 @@ import '../componentes/compartidos/app_bar_simple.dart';
 import '../componentes/inventario/inventory_search_bar.dart';
 import '../componentes/ventas/factura_filtro_chips.dart';
 import '../componentes/ventas/factura_list_card.dart';
+import '../services/facturas_service.dart';
+import '../services/pedidos_service.dart';
 import '../styles/app_colors.dart';
 import 'generar_factura_page.dart';
 
@@ -16,109 +18,49 @@ class HistorialFacturasPage extends StatefulWidget {
 
 class _HistorialFacturasPageState extends State<HistorialFacturasPage> {
   final _searchCtrl = TextEditingController();
+  final _service = FacturasService();
   FacturaFiltro _filtro = FacturaFiltro.todas;
+  List<FacturaListItem> _facturas = [];
+  bool _loading = true;
+  String? _error;
 
-  // Mock — conectar GET /facturas
-  final _facturas = const [
-    FacturaListItem(
-      id: 'FAC-1045',
-      cliente: 'Carlos Restrepo Restrepo',
-      documento: 'C.C. 1045230981',
-      fecha: '12 Oct 2023',
-      unidades: 4,
-      total: 81225,
-      estado: 'Pagada',
-      vendedor: 'David',
-      descuentoPct: 5,
-      lineas: [
-        FacturaLinea(
-          nombre: "Helecho Boston Maceta 10''",
-          cantidad: 3,
-          unitario: 22500,
-        ),
-        FacturaLinea(
-          nombre: 'Cuna de Moisés (Spathiphyllum)',
-          cantidad: 1,
-          unitario: 18000,
-        ),
-      ],
-    ),
-    FacturaListItem(
-      id: 'FAC-1044',
-      cliente: 'Diana María Gómez Trujillo',
-      documento: 'C.C. 52987654',
-      fecha: '11 Oct 2023',
-      unidades: 6,
-      total: 120000,
-      estado: 'Pendiente',
-      vendedor: 'David',
-      descuentoPct: 0,
-      lineas: [
-        FacturaLinea(
-          nombre: 'Anturio Rojo Maceta 6"',
-          cantidad: 6,
-          unitario: 20000,
-        ),
-      ],
-    ),
-    FacturaListItem(
-      id: 'FAC-1043',
-      cliente: 'Inversiones del Bosque S.A.S',
-      documento: 'NIT 900123456',
-      fecha: '09 Oct 2023',
-      unidades: 12,
-      total: 345000,
-      estado: 'Pagada',
-      vendedor: 'Ana',
-      descuentoPct: 5,
-      lineas: [
-        FacturaLinea(
-          nombre: "Helecho Boston Maceta 10''",
-          cantidad: 12,
-          unitario: 22500,
-        ),
-      ],
-    ),
-    FacturaListItem(
-      id: 'FAC-1042',
-      cliente: 'María Camila Pérez',
-      documento: 'C.C. 1012345678',
-      fecha: '08 Oct 2023',
-      unidades: 2,
-      total: 45000,
-      estado: 'Pagada',
-      vendedor: 'David',
-      lineas: [
-        FacturaLinea(
-          nombre: 'Cuna de Moisés (Spathiphyllum)',
-          cantidad: 2,
-          unitario: 18000,
-        ),
-      ],
-    ),
-    FacturaListItem(
-      id: 'FAC-1041',
-      cliente: 'Andrés Felipe Muñoz',
-      documento: 'C.C. 1098765432',
-      fecha: '05 Oct 2023',
-      unidades: 1,
-      total: 18000,
-      estado: 'Pendiente',
-      vendedor: 'Ana',
-      lineas: [
-        FacturaLinea(
-          nombre: 'Cuna de Moisés (Spathiphyllum)',
-          cantidad: 1,
-          unitario: 18000,
-        ),
-      ],
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargar() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await _service.listar();
+      if (!mounted) return;
+      setState(() {
+        _facturas = data;
+        _loading = false;
+      });
+    } on PedidosException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'No se pudieron cargar las facturas.';
+      });
+    }
   }
 
   List<FacturaListItem> get _filtradas {
@@ -139,9 +81,7 @@ class _HistorialFacturasPageState extends State<HistorialFacturasPage> {
   void _abrirResumen(FacturaListItem f) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => GenerarFacturaPage(factura: f),
-      ),
+      MaterialPageRoute(builder: (_) => GenerarFacturaPage(factura: f)),
     );
   }
 
@@ -169,29 +109,43 @@ class _HistorialFacturasPageState extends State<HistorialFacturasPage> {
                 onChanged: (f) => setState(() => _filtro = f),
               ),
             ),
-            Expanded(
-              child: items.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No hay facturas',
-                        style: TextStyle(color: AppColors.textMuted),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, i) {
-                        final f = items[i];
-                        return FacturaListCard(
-                          factura: f,
-                          onTap: () => _abrirResumen(f),
-                        );
-                      },
-                    ),
-            ),
+            Expanded(child: _body(items)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _body(List<FacturaListItem> items) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(_error!, textAlign: TextAlign.center),
+          TextButton(onPressed: _cargar, child: const Text('Reintentar')),
+        ]),
+      );
+    }
+    if (items.isEmpty) {
+      return Center(
+        child: Text('No hay facturas',
+            style: TextStyle(color: AppColors.textMuted)),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _cargar,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) {
+          final f = items[i];
+          return FacturaListCard(
+            factura: f,
+            onTap: () => _abrirResumen(f),
+          );
+        },
       ),
     );
   }
