@@ -48,3 +48,19 @@ class MainApp extends StatelessWidget {
 //pagina del ngrok: https://dashboard.ngrok.com/
 //comando para compilar el proyecto a apk: flutter build apk --debug --dart-define=API_BASE_URL=https://surging-gaffe-shell.ngrok-free.dev
 //se guarda en la carpeta \build\app\outputs\apk\debug\"archivo.apk"
+
+//cosas para modificar:
+//organizar dashboard
+//organizar gestionar notificaciones
+//organizar notificaciones
+//organizar el token de mantener inicio se secion
+//organizar el token de inicio se secion con google
+//organizar input de "cantidad a ajustar" en Ajustar stock
+//organizar quitar icono de filtros en el inventario 
+//organizar colocar metoco de pago en "nueva venta", metodos(Efectivo y transferencia)
+//organizar bloquear el metodo de pago en "resumen de venta", segun el que se escoja al momento de hacer la venta
+//organizar el boton de enviar por correo en "resumen de venta"
+//organizar el permitir cambiar el correo y el numero en "mi cuenta"
+//organizar la fecha de registro en "detalle del cliente"
+//organizar lo de ultimas compras en "detalle del cliente"
+//organizar el historial del chatbot
