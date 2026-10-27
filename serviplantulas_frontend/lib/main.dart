@@ -50,17 +50,17 @@ class MainApp extends StatelessWidget {
 //se guarda en la carpeta \build\app\outputs\apk\debug\"archivo.apk"
 
 //cosas para modificar:
-//organizar dashboard
-//organizar gestionar notificaciones
-//organizar notificaciones
-//organizar el token de mantener inicio se secion
-//organizar el token de inicio se secion con google
-//organizar input de "cantidad a ajustar" en Ajustar stock
+
+
 //organizar quitar icono de filtros en el inventario 
-//organizar colocar metoco de pago en "nueva venta", metodos(Efectivo y transferencia)
-//organizar bloquear el metodo de pago en "resumen de venta", segun el que se escoja al momento de hacer la venta
-//organizar el boton de enviar por correo en "resumen de venta"
-//organizar el permitir cambiar el correo y el numero en "mi cuenta"
 //organizar la fecha de registro en "detalle del cliente"
 //organizar lo de ultimas compras en "detalle del cliente"
-//organizar el historial del chatbot
+
+
+//organizar colocar metoco de pago en "nueva venta", metodos(Efectivo y transferencia)  - martes
+//organizar el token de inicio se secion con google  - martes
+//organizar bloquear el metodo de pago en "resumen de venta", segun el que se escoja al momento de hacer la venta  - martes
+//organizar el boton de enviar por correo en "resumen de venta"  - martes
+//organizar el permitir cambiar el correo y el numero en "mi cuenta"  - martes
+//organizar el historial del chatbot  - martes
+//organizar el token de mantener inicio se secion - martes

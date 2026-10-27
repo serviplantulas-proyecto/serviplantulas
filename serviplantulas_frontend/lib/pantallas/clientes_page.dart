@@ -4,6 +4,7 @@ import '../componentes/clientes/client_card.dart';
 import '../componentes/clientes/cliente_filtro_chip.dart';
 import '../componentes/inventario/inventory_search_bar.dart';
 import '../models/cliente.dart';
+import '../services/cliente_compras_helper.dart';
 import '../services/clientes_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
@@ -19,6 +20,7 @@ class ClientesPage extends StatefulWidget {
 
 class _ClientesPageState extends State<ClientesPage> {
   final _service = ClientesService();
+  final _compras = ClienteComprasHelper();
   final _searchCtrl = TextEditingController();
   List<Cliente> _clientes = [];
   String? _expandidoId;
@@ -45,9 +47,10 @@ class _ClientesPageState extends State<ClientesPage> {
     });
     try {
       final data = await _service.listar(busqueda: _searchCtrl.text);
+      final enriquecidos = await _compras.enriquecer(data);
       if (!mounted) return;
       setState(() {
-        _clientes = data;
+        _clientes = enriquecidos;
         _loading = false;
       });
     } catch (e) {
@@ -64,7 +67,8 @@ class _ClientesPageState extends State<ClientesPage> {
   Future<void> _filtrar() async {
     try {
       final data = await _service.listar(busqueda: _searchCtrl.text);
-      if (mounted) setState(() => _clientes = data);
+      final enriquecidos = await _compras.enriquecer(data);
+      if (mounted) setState(() => _clientes = enriquecidos);
     } catch (_) {}
   }
 

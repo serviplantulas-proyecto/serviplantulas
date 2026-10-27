@@ -9,6 +9,8 @@ import '../services/dashboard_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
+import 'mi_cuenta_page.dart';
+import 'notificaciones_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback? onNuevaVenta;
@@ -35,7 +37,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final DashboardService _service = DashboardService();
+  final _service = DashboardService();
   DashboardStats? _stats;
   bool _loading = true;
 
@@ -49,23 +51,41 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() => _loading = true);
     try {
       final data = await _service.obtenerResumen();
-      if (mounted) setState(() {
-        _stats = data;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _stats = data;
+          _loading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  String _formatMoney(double v) {
+  String _fmt(num v, {String suffix = ''}) {
     final s = v.toStringAsFixed(0);
     final buf = StringBuffer();
     for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
       buf.write(s[i]);
     }
-    return '\$${buf.toString()}';
+    return '${buf.toString()}$suffix';
+  }
+
+  Future<void> _irMiCuenta() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MiCuentaPage()),
+    );
+    _cargar();
+  }
+
+  Future<void> _irNotificaciones() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificacionesPage()),
+    );
+    if (mounted) _cargar();
   }
 
   @override
@@ -84,13 +104,17 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const DashboardHeader(nombreUsuario: 'Admin'),
+                      DashboardHeader(
+                        nombreUsuario: _stats?.nombreUsuario ?? 'Admin',
+                        notificacionesNoLeidas:
+                            _stats?.notificacionesNoLeidas ?? 0,
+                        onAvatarTap: _irMiCuenta,
+                        onNotificacionesTap: _irNotificaciones,
+                      ),
                       if (_stats != null) ...[
                         _buildStats(_stats!),
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: SalesChart(
                             data: _stats!.historicoVentas,
                             variacion: _stats!.variacionSemanal,
@@ -135,14 +159,14 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               StatCard(
                 label: 'Ventas del Día',
-                value: _formatMoney(stats.ventasDelDia),
+                value: _fmt(stats.ventasDelDia, suffix: ' COP'),
                 icon: Icons.point_of_sale,
                 iconBackground: AppColors.successBackground,
               ),
               const SizedBox(width: 12),
               StatCard(
                 label: 'Productos Stock',
-                value: '${_formatNumber(stats.productosStock)} Unidades',
+                value: _fmt(stats.productosStock, suffix: ' Unidades'),
                 icon: Icons.local_florist,
                 iconBackground: AppColors.editBackground,
               ),
@@ -169,15 +193,5 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
     );
-  }
-
-  String _formatNumber(int n) {
-    final s = n.toString();
-    final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-      buf.write(s[i]);
-    }
-    return buf.toString();
   }
 }

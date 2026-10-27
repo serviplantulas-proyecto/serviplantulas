@@ -7,14 +7,12 @@ import '../../styles/app_text_styles.dart';
 class InventorySearchBar extends StatelessWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
-  final VoidCallback? onFilterTap;
   final String hint;
 
   const InventorySearchBar({
     super.key,
     this.controller,
     this.onChanged,
-    this.onFilterTap,
     this.hint = 'Buscar planta, código o categoría...',
   });
 
@@ -47,15 +45,6 @@ class InventorySearchBar extends StatelessWidget {
               ),
             ),
           ),
-          if (onFilterTap != null)
-            GestureDetector(
-              onTap: onFilterTap,
-              child: const Icon(
-                Icons.tune,
-                size: 18,
-                color: AppColors.textMuted,
-              ),
-            ),
         ],
       ),
     );

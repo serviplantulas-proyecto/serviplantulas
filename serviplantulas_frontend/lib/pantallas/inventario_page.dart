@@ -228,7 +228,6 @@ class _InventarioPageState extends State<InventarioPage> {
           InventorySearchBar(
             controller: _searchController,
             onChanged: (_) => _filtrar(),
-            onFilterTap: () {},
           ),
           const SizedBox(height: 12),
           CategoryChips(

@@ -50,7 +50,12 @@ class ClienteDetalleInfo extends StatelessWidget {
                 ? '—'
                 : c.direccionCliente!,
           ),
-          _field('FECHA DE REGISTRO', '—'),
+          _field(
+            'FECHA DE REGISTRO',
+            (c.fechaRegistro == null || c.fechaRegistro!.isEmpty)
+                ? '—'
+                : c.fechaRegistro!,
+          ),
         ],
       ),
     );
