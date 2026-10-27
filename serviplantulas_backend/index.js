@@ -31,6 +31,11 @@ app.get("/", (req, res) => {
         vercion: "2.0.0",
     });
 });
+
+// Montando las rutas de la API
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 //rutas de autentificacion
 app.use("/productos", productosRouter);
 app.use("/categorias", categoriasRouter);
@@ -48,7 +53,7 @@ app.use(cors({
 }));
 
 //configuramos el puerto 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 //poner a escuchar el servidor
 app.listen(PORT, () => {
     console.log(`servidor escuchando el puerto ${PORT}`);

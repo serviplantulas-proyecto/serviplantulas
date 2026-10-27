@@ -2,9 +2,11 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiConfig {
-  static const String _apiBaseUrlOverride = String.fromEnvironment(
-    'API_BASE_URL',
-  );
+  // Cambia a false cuando quieras volver a probar con tu servidor Node.js local
+  static const bool useRemote = true;
+
+  // URL de tu backend desplegado en Render
+  static const String _remoteUrl = 'https://serviplantulas.onrender.com/';
 
   // ── Auth ──
   static String get loginUrl => '${_apiHost}auth/login';
@@ -48,14 +50,11 @@ class ApiConfig {
   static String get notificacionesUrl => '${_apiHost}notificaciones/';
   static String get notificacionesNoLeidasUrl =>
       '${notificacionesUrl}no-leidas';
-  static String notificacionLeidaUrl(int id) =>
-      '${notificacionesUrl}$id/leida';
+  static String notificacionLeidaUrl(int id) => '${notificacionesUrl}$id/leida';
 
   static String get _apiHost {
-    if (_apiBaseUrlOverride.isNotEmpty) {
-      return _apiBaseUrlOverride.endsWith('/')
-          ? _apiBaseUrlOverride
-          : '$_apiBaseUrlOverride/';
+    if (useRemote) {
+      return _remoteUrl;
     }
     if (kIsWeb) {
       return 'http://localhost:3000/';
@@ -73,7 +72,6 @@ class ApiConfig {
   static const Map<String, String> headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
   };
 
   static Map<String, String> authHeaders(String token) => {
