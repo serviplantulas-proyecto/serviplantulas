@@ -8,7 +8,6 @@ import {
 } from "../controllers/usuario-controller.js";
 
 import { forgotPassword, verifyCode, verifyProfileChange } from "../controllers/recuperar-controller.js";
-router.post("/verify-profile-change", verifyProfileChange);
 
 const router = express.Router();
 
