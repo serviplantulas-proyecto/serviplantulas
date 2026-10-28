@@ -4,6 +4,7 @@ import '../componentes/boton/app_button.dart';
 import '../componentes/ventas/registro_venta_controller.dart';
 import '../componentes/ventas/venta_cliente_section.dart';
 import '../componentes/ventas/venta_metodo_pago.dart';
+import '../componentes/ventas/venta_page_app_bar.dart';
 import '../componentes/ventas/venta_productos_section.dart';
 import '../componentes/ventas/venta_totales.dart';
 import '../models/cliente.dart';
@@ -12,7 +13,6 @@ import '../services/pedidos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_spacing.dart';
 import 'agregar_cliente_page.dart';
-import '../componentes/ventas/venta_page_app_bar.dart';
 
 class RegistroVentaPage extends StatefulWidget {
   const RegistroVentaPage({super.key});
@@ -130,6 +130,8 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                           setState(() => _ctrl.cambiarCantidad(i, 1)),
                       onDecrement: (i) =>
                           setState(() => _ctrl.cambiarCantidad(i, -1)),
+                      onCantidadChanged: (i, v) =>
+                          setState(() => _ctrl.setCantidad(i, v)),
                       onSearchChanged: (q) => setState(
                         () => _sugerenciasProducto = _ctrl.filtrarProductos(q),
                       ),
@@ -177,5 +179,4 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
       ),
     );
   }
-
 }

@@ -5,7 +5,6 @@ import '../../services/clientes_service.dart';
 import '../../services/pedidos_service.dart';
 import '../../services/productos_service.dart';
 
-/// Lógica de catálogo y registro (sin UI).
 class RegistroVentaController {
   final _clientesService = ClientesService();
   final _productosService = ProductosService();
@@ -46,7 +45,6 @@ class RegistroVentaController {
   }
 
   void seleccionarCliente(Cliente c) => cliente = c;
-
   void limpiarCliente() => cliente = null;
 
   void agregarProducto(Producto p) {
@@ -64,6 +62,16 @@ class RegistroVentaController {
       items.removeAt(index);
     } else {
       items[index] = items[index].copyWith(cantidad: nueva);
+    }
+  }
+
+  /// Cantidad exacta (escritura manual). ≤0 elimina el ítem.
+  void setCantidad(int index, int cantidad) {
+    if (index < 0 || index >= items.length) return;
+    if (cantidad <= 0) {
+      items.removeAt(index);
+    } else {
+      items[index] = items[index].copyWith(cantidad: cantidad);
     }
   }
 

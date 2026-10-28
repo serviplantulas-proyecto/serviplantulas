@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../services/chat_plantulas_service.dart';
 import '../../styles/app_colors.dart';
@@ -15,6 +16,18 @@ class ChatMessageList extends StatelessWidget {
     required this.cargando,
     required this.controller,
   });
+
+  Future<void> _copiar(BuildContext context, String texto) async {
+    await Clipboard.setData(ClipboardData(text: texto));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Mensaje copiado'),
+        duration: Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,24 +53,30 @@ class ChatMessageList extends StatelessWidget {
         return Align(
           alignment:
               m.esUsuario ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
-            ),
-            decoration: BoxDecoration(
-              color: m.esUsuario ? AppColors.primary : AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border:
-                  m.esUsuario ? null : Border.all(color: AppColors.border),
-            ),
-            child: Text(
-              m.texto,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: m.esUsuario
-                    ? AppColors.surface
-                    : AppColors.textPrimary,
+          child: GestureDetector(
+            onLongPress: () => _copiar(context, m.texto),
+            onDoubleTap: () => _copiar(context, m.texto),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              decoration: BoxDecoration(
+                color: m.esUsuario ? AppColors.primary : AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: m.esUsuario
+                    ? null
+                    : Border.all(color: AppColors.border),
+              ),
+              child: SelectableText(
+                m.texto,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: m.esUsuario
+                      ? AppColors.surface
+                      : AppColors.textPrimary,
+                ),
               ),
             ),
           ),

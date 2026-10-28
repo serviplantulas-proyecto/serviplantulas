@@ -4,6 +4,7 @@ import '../../models/producto.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import 'venta_qty_controls.dart';
 import 'venta_search_field.dart';
 
 class ItemVenta {
@@ -28,6 +29,7 @@ class VentaProductosSection extends StatelessWidget {
   final List<Producto> sugerencias;
   final ValueChanged<int> onIncrement;
   final ValueChanged<int> onDecrement;
+  final void Function(int index, int cantidad)? onCantidadChanged;
   final ValueChanged<String>? onSearchChanged;
   final ValueChanged<Producto>? onProductoSeleccionado;
   final VoidCallback? onClearSearch;
@@ -39,6 +41,7 @@ class VentaProductosSection extends StatelessWidget {
     this.sugerencias = const [],
     required this.onIncrement,
     required this.onDecrement,
+    this.onCantidadChanged,
     this.onSearchChanged,
     this.onProductoSeleccionado,
     this.onClearSearch,
@@ -48,10 +51,10 @@ class VentaProductosSection extends StatelessWidget {
     final s = v.toStringAsFixed(0);
     final buf = StringBuffer();
     for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
       buf.write(s[i]);
     }
-    return '\$${buf.toString()}';
+    return '${buf.toString()} COP';
   }
 
   @override
@@ -67,7 +70,6 @@ class VentaProductosSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // Buscador de productos (Figma)
         VentaSearchField(
           controller: searchController,
           hintText: 'Escribe el nombre de la planta para añadir...',
@@ -119,20 +121,15 @@ class VentaProductosSection extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _QtyBtn(
+                  VentaQtyBtn(
                     icon: Icons.remove,
                     onTap: () => onDecrement(i),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      '${item.cantidad}',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  VentaQtyField(
+                    value: item.cantidad,
+                    onChanged: (v) => onCantidadChanged?.call(i, v),
                   ),
-                  _QtyBtn(
+                  VentaQtyBtn(
                     icon: Icons.add,
                     onTap: () => onIncrement(i),
                   ),
@@ -178,7 +175,8 @@ class _SugerenciasProducto extends StatelessWidget {
           return InkWell(
             onTap: () => onSelect?.call(p),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
                   Expanded(
@@ -201,30 +199,6 @@ class _SugerenciasProducto extends StatelessWidget {
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-}
-
-class _QtyBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _QtyBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Icon(icon, size: 16, color: AppColors.primary),
       ),
     );
   }

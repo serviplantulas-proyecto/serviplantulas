@@ -51,13 +51,10 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-//organizar el historial del chatbot  - martes
-//organizar que los mensajes del chatbot se puedan copiar
-//organizar el token de mantener inicio se secion - martes
-//organizar hacer que se pueda escribir manual el aumentador de cantidad a comprar en "nueva venta"
-//organizar que al hacer una venta el stock del inventario baje y en el dashboard tambien
-//organizar el hacer que llegue la notificaciones segun lo guardado en "configurar alertas"
-//organizar el orden el orden del menu mas
-//organizar los limites en los inputs numericos o textuales
+//organizar los limites en los inputs numericos
+//organizar el hacer que llegue la notificaciones segun lo guardado en "configurar alertas" - miercoles
+//organizar que al hacer una venta el stock del inventario baje y en el dashboard tambien - miercoles
+//organizar el token de mantener inicio se secion - miercoles
 //organizar el boton de enviar por correo en "resumen de venta"  - miercoles
 //organizar el token de inicio se secion con google  - miercoles
+//organizar el orden el orden del menu mas - miercoles, en el sena
