@@ -203,8 +203,9 @@ export const eliminar = async (req, res) => {
         const { error } = await eliminarProducto(id);
 
         if (error) {
-            return res.status(500).json({
-                error: "Error al eliminar el producto"
+            console.error("Error al eliminar el producto:", error);
+            return res.status(error.code === "23502" || error.code === "23503" ? 409 : 500).json({
+                error: error.message || "Error al desvincular el historial del producto"
             });
         }
 

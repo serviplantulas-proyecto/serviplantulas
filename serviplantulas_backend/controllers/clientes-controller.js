@@ -121,8 +121,9 @@ export const eliminar = async (req, res) => {
         const { id } = req.params;
         const { error } = await eliminarCliente(id);
         if (error) {
-            return res.status(500).json({
-                error: 'Error al eliminar el cliente'
+            console.error('Error al eliminar el cliente:', error);
+            return res.status(error.code === '23502' || error.code === '23503' ? 409 : 500).json({
+                error: error.message || 'Error al desvincular el historial del cliente'
             });
         }
         return res.status(200).json({

@@ -52,6 +52,12 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
+//solucionar error al momento de eliminar productos y clientes
+//permitir eliminar proveedor
+//permitir eliminar registro del historial del chatbot
+//agrandar un poquito los inputs de los buscadores(searhs)
+//permitir quitar la imagen agregada en resgistrar producto
+//agregar la opcion de tiempo de eliminacion automatica de las notificaciones,(cada semana, cada mes, 3meses, 6meses o un año)
 //organizar los limites en los inputs numericos - miercoles
 //organizar el hacer que llegue la notificaciones segun lo guardado en "configurar alertas" - miercoles
 //organizar que al hacer una venta el stock del inventario baje y en el dashboard tambien - miercoles
