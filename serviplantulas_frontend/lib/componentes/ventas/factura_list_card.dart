@@ -10,9 +10,10 @@ class FacturaListItem {
   final String fecha;
   final int unidades;
   final double total;
-  final String estado; // 'Pagada' | 'Pendiente'
+  final String estado;
   final String? documento;
   final String? vendedor;
+  final String metodoPago;
   final List<FacturaLinea> lineas;
   final double descuentoPct;
   final double ivaPct;
@@ -26,6 +27,7 @@ class FacturaListItem {
     required this.estado,
     this.documento,
     this.vendedor,
+    this.metodoPago = 'Efectivo',
     this.lineas = const [],
     this.descuentoPct = 0,
     this.ivaPct = 19,
@@ -52,25 +54,30 @@ class FacturaListCard extends StatelessWidget {
   final FacturaListItem factura;
   final VoidCallback? onTap;
 
-  const FacturaListCard({
-    super.key,
-    required this.factura,
-    this.onTap,
-  });
+  const FacturaListCard({super.key, required this.factura, this.onTap});
 
   String _money(double v) {
     final s = v.toStringAsFixed(0);
     final buf = StringBuffer();
     for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
       buf.write(s[i]);
     }
-    return '\$${buf.toString()}';
+    return '${buf.toString()} COP';
+  }
+
+  /// "Transferencia" → "Trans...", "Efectivo" → "Efec..." si hace falta espacio.
+  String _metodoCorto(String m) {
+    final t = m.trim();
+    if (t.length <= 5) return t;
+    return '${t.substring(0, 4)}…';
   }
 
   @override
   Widget build(BuildContext context) {
     final pagada = factura.isPagada;
+    final metodo = _metodoCorto(factura.metodoPago);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -92,6 +99,8 @@ class FacturaListCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                       color: AppColors.primary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
@@ -119,17 +128,23 @@ class FacturaListCard extends StatelessWidget {
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 10),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '${factura.fecha} · ${factura.unidades} Unidades',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMuted,
+                Expanded(
+                  child: Text(
+                    '${factura.fecha} · ${factura.unidades} Unid. · $metodo',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   _money(factura.total),
                   style: AppTextStyles.bodyLarge.copyWith(

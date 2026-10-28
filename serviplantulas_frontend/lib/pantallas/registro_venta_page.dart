@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../componentes/boton/app_button.dart';
 import '../componentes/ventas/registro_venta_controller.dart';
 import '../componentes/ventas/venta_cliente_section.dart';
+import '../componentes/ventas/venta_metodo_pago.dart';
 import '../componentes/ventas/venta_productos_section.dart';
 import '../componentes/ventas/venta_totales.dart';
 import '../models/cliente.dart';
@@ -10,8 +11,8 @@ import '../models/producto.dart';
 import '../services/pedidos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_spacing.dart';
-import '../styles/app_text_styles.dart';
 import 'agregar_cliente_page.dart';
+import '../componentes/ventas/venta_page_app_bar.dart';
 
 class RegistroVentaPage extends StatefulWidget {
   const RegistroVentaPage({super.key});
@@ -80,7 +81,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _appBar(),
+            const VentaPageAppBar(title: 'Nueva Venta'),
             if (_cargandoCatalogo) const LinearProgressIndicator(minHeight: 2),
             Expanded(
               child: SingleChildScrollView(
@@ -147,6 +148,11 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                       },
                     ),
                     const SizedBox(height: AppSpacing.extraLarge),
+                    VentaMetodoPago(
+                      value: _ctrl.metodoPago,
+                      onChanged: (m) => setState(() => _ctrl.metodoPago = m),
+                    ),
+                    const SizedBox(height: AppSpacing.extraLarge),
                     VentaTotales(
                       subtotal: _ctrl.subtotal,
                       descuento: _ctrl.descuento,
@@ -160,8 +166,7 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
                       type: AppButtonType.accent,
                       icon: Icons.check,
                       isLoading: _isLoading,
-                      onPressed:
-                          _ctrl.items.isEmpty ? null : _registrar,
+                      onPressed: _ctrl.items.isEmpty ? null : _registrar,
                     ),
                   ],
                 ),
@@ -173,29 +178,4 @@ class _RegistroVentaPageState extends State<RegistroVentaPage> {
     );
   }
 
-  Widget _appBar() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          ),
-          Text(
-            'Nueva Venta',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -1,9 +1,8 @@
 import '../componentes/ventas/factura_list_card.dart';
-import '../services/clientes_service.dart';
-import '../services/pedidos_service.dart';
-import '../services/productos_service.dart';
+import 'clientes_service.dart';
+import 'pedidos_service.dart';
+import 'productos_service.dart';
 
-/// Arma FacturaListItem desde pedidos + detalles + clientes + productos.
 class FacturasService {
   final _pedidos = PedidosService();
   final _clientes = ClientesService();
@@ -42,6 +41,7 @@ class FacturasService {
       final unidades = lineas.fold<int>(0, (s, l) => s + l.cantidad);
       final estadoRaw = (p['estado'] ?? 'completado').toString().toLowerCase();
       final estado = estadoRaw == 'pendiente' ? 'Pendiente' : 'Pagada';
+      final metodo = (p['metodo_pago'] ?? 'Efectivo').toString();
 
       facturas.add(FacturaListItem(
         id: id.toString(),
@@ -55,6 +55,7 @@ class FacturasService {
         unidades: unidades,
         total: _asDouble(p['total']),
         estado: estado,
+        metodoPago: metodo,
         lineas: lineas,
       ));
     }

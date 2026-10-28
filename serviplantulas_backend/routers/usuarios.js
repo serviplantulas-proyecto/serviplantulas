@@ -7,10 +7,8 @@ import {
     reenviarCodigoVerificacion
 } from "../controllers/usuario-controller.js";
 
-import {
-    forgotPassword,
-    verifyCode
-} from "../controllers/recuperar-controller.js";
+import { forgotPassword, verifyCode, verifyProfileChange } from "../controllers/recuperar-controller.js";
+router.post("/verify-profile-change", verifyProfileChange);
 
 const router = express.Router();
 
@@ -80,6 +78,12 @@ router.post("/forgot-password", forgotPassword);
 // se actualiza la contraseña del usuario.
 
 router.post("/verify-code", verifyCode);
+
+// POST - Verificar código y cambiar correo y/o teléfono
+// URL: http://localhost:3000/auth/verify-profile-change
+// Body: { "email": "actual@...", "codigo": "123456", "nuevo_email": "...", "nuevo_telefono": "..." }
+// Paso 1: POST /auth/forgot-password con el correo actual (envía código)
+router.post("/verify-profile-change", verifyProfileChange);
 
 
 export default router;

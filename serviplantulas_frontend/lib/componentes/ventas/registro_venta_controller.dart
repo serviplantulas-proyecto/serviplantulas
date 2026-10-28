@@ -15,6 +15,7 @@ class RegistroVentaController {
   List<Producto> productos = [];
   Cliente? cliente;
   final List<ItemVenta> items = [];
+  String metodoPago = 'Efectivo';
 
   double get subtotal => items.fold(0.0, (s, i) => s + i.subtotal);
   double get descuento =>
@@ -76,6 +77,7 @@ class RegistroVentaController {
     return _pedidosService.registrarVenta(
       idCliente: cliente!.idCliente,
       items: items,
+      metodoPago: metodoPago,
     );
   }
 }

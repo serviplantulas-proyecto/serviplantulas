@@ -413,3 +413,86 @@ export const verifyCode = async (req, res) => {
     }
 
 };
+
+
+export const verifyProfileChange = async (req, res) => {
+    try {
+        const email = req.body.email?.trim().toLowerCase();
+        const codigo = req.body.codigo;
+        const nuevoEmail = req.body.nuevo_email?.trim().toLowerCase();
+        const nuevoTelefono = req.body.nuevo_telefono?.trim();
+
+        if (!email || !codigo) {
+            return res.status(400).json({ error: "Email y código son requeridos" });
+        }
+        if (!nuevoEmail && !nuevoTelefono) {
+            return res.status(400).json({
+                error: "Debes enviar nuevo_email o nuevo_telefono"
+            });
+        }
+
+        const { data: usuario, error: errorUsuario } = await obtenerPorEmail(email);
+        if (errorUsuario || !usuario) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        const { data: codigoRecord, error: errorCodigo } =
+            await obtenerCodigoValido(usuario.id_usuarios, codigo);
+        if (errorCodigo || !codigoRecord) {
+            return res.status(400).json({
+                error: "Código inválido o expirado"
+            });
+        }
+
+        const campos = {};
+        if (nuevoEmail) {
+            const { data: existente } = await obtenerPorEmail(nuevoEmail);
+            if (existente && existente.id_usuarios !== usuario.id_usuarios) {
+                return res.status(400).json({
+                    error: "Ese correo ya está registrado"
+                });
+            }
+            campos.email_usuarios = nuevoEmail;
+        }
+        if (nuevoTelefono) {
+            campos.telefono_usuarios = nuevoTelefono;
+        }
+
+        const { error: updateError } = await actualizarUsuario(
+            usuario.id_usuarios,
+            campos
+        );
+        if (updateError) {
+            return res.status(500).json({ error: "Error al actualizar el perfil" });
+        }
+
+        await marcarComoUsado(codigoRecord.id);
+
+        const destino = nuevoEmail || email;
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: destino,
+            subject: "Datos de cuenta actualizados - Serviplántulas",
+            html: `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px;">
+                    <h2>Perfil actualizado</h2>
+                    <p>Hola ${usuario.nombre_usuarios || "usuario"}.</p>
+                    <p>Se actualizaron datos de tu cuenta en Serviplántulas.</p>
+                    ${nuevoEmail ? `<p><strong>Nuevo correo:</strong> ${nuevoEmail}</p>` : ""}
+                    ${nuevoTelefono ? `<p><strong>Nuevo teléfono:</strong> ${nuevoTelefono}</p>` : ""}
+                    <p>Si no fuiste tú, contacta al administrador.</p>
+                    <p>Serviplántulas 🌱</p>
+                </div>
+            `
+        });
+
+        return res.status(200).json({
+            message: "Perfil actualizado correctamente",
+            email: nuevoEmail || email,
+            telefono: nuevoTelefono || usuario.telefono_usuarios || null
+        });
+    } catch (error) {
+        console.error("Error en verifyProfileChange:", error);
+        return res.status(500).json({ error: "Error al actualizar el perfil" });
+    }
+};

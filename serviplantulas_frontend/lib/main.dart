@@ -51,17 +51,6 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-
-//organizar quitar icono de filtros en el inventario 
-//organizar la fecha de registro en "detalle del cliente"
-//organizar lo de ultimas compras en "detalle del cliente"
-
-
-//organizar colocar metoco de pago en "nueva venta", metodos(Efectivo y transferencia)  - martes
-//organizar el token de inicio se secion con google  - martes
-//organizar bloquear el metodo de pago en "resumen de venta", segun el que se escoja al momento de hacer la venta  - martes
-//organizar el boton de enviar por correo en "resumen de venta"  - martes
-//organizar el permitir cambiar el correo y el numero en "mi cuenta"  - martes
 //organizar el historial del chatbot  - martes
 //organizar que los mensajes del chatbot se puedan copiar
 //organizar el token de mantener inicio se secion - martes
@@ -70,3 +59,5 @@ class MainApp extends StatelessWidget {
 //organizar el hacer que llegue la notificaciones segun lo guardado en "configurar alertas"
 //organizar el orden el orden del menu mas
 //organizar los limites en los inputs numericos o textuales
+//organizar el boton de enviar por correo en "resumen de venta"  - miercoles
+//organizar el token de inicio se secion con google  - miercoles

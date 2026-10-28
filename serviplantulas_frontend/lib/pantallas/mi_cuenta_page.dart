@@ -1,14 +1,15 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
+import '../componentes/cuenta/mi_cuenta_campo_tile.dart';
+import '../componentes/cuenta/mi_cuenta_header.dart';
 import '../componentes/cuenta/mi_cuenta_seguridad.dart';
+import '../services/perfil_prefs.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
+import 'cambiar_dato_solicitar_page.dart';
 import 'login.dart';
 import 'solicitar_codigo_page.dart';
 
@@ -20,85 +21,52 @@ class MiCuentaPage extends StatefulWidget {
 }
 
 class _MiCuentaPageState extends State<MiCuentaPage> {
-  String _nombre = 'Usuario';
-  String _nombreCompleto = '';
-  String _email = '';
-  String _telefono = 'telefono';
-  String _rol = 'Usuario';
-  bool _passExpanded = false;
-  bool _loading = true;
+  PerfilPrefs? _p;
+  bool _pass = false, _emailExp = false, _telExp = false, _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _cargarUsuario();
+    _cargar();
   }
 
-  Future<void> _cargarUsuario() async {
-    final prefs = await SharedPreferences.getInstance();
-    var email = prefs.getString('user_email') ?? '';
-    var nombre = prefs.getString('user_nombre') ?? '';
-    var apellido = prefs.getString('user_apellido') ?? '';
-    var telefono = prefs.getString('user_telefono') ?? '';
-    var rol = prefs.getString('user_rol') ?? '';
-
-    // Completar desde JWT (login ya incluye nombre, apellido, email, rol)
-    final token = prefs.getString('auth_token');
-    if (token != null && token.contains('.')) {
-      try {
-        final map = jsonDecode(utf8.decode(
-          base64Url.decode(base64Url.normalize(token.split('.')[1])),
-        ));
-        if (map is Map) {
-          if (email.isEmpty) email = (map['email'] ?? '').toString();
-          if (nombre.isEmpty) nombre = (map['nombre'] ?? '').toString();
-          if (apellido.isEmpty) apellido = (map['apellido'] ?? '').toString();
-          if (rol.isEmpty) rol = (map['rol'] ?? '').toString();
-          if (telefono.isEmpty) rol = (map['telefono'] ?? '').toString();
-        }
-      } catch (_) {}
-    }
-
-    final full = [nombre, apellido].where((s) => s.trim().isNotEmpty).join(' ');
-    final display = full.isNotEmpty ? full : (email.isNotEmpty ? email : 'Usuario');
-    final short = display.split(RegExp(r'\s+')).take(2).join(' ');
-    final rolLabel = _formatearRol(rol);
-
+  Future<void> _cargar() async {
+    final p = await PerfilPrefs.cargar();
     if (!mounted) return;
     setState(() {
-      _email = email;
-      _telefono = telefono;
-      _nombreCompleto = display;
-      _nombre = short;
-      _rol = rolLabel;
+      _p = p;
       _loading = false;
     });
   }
 
-  String _formatearRol(String rol) {
-    final r = rol.trim().toLowerCase();
-    if (r == 'admin' || r == 'administrador') return 'Administrador';
-    if (r == 'administradora') return 'Administradora';
-    if (r.isEmpty) return 'Usuario';
-    return rol[0].toUpperCase() + rol.substring(1);
-  }
-
   String get _iniciales {
-    final parts = _nombre.trim().split(RegExp(r'\s+'));
+    final n = _p?.nombre ?? '';
+    final parts = n.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return '?';
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
-  Future<void> _cerrarSesion() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    await prefs.remove('user_email');
-    await prefs.remove('user_nombre');
-    await prefs.remove('user_apellido');
-    await prefs.remove('user_telefono');
-    await prefs.remove('user_rol');
-    await prefs.remove('user_id');
+  Future<void> _irCambio(TipoCambioDato tipo) async {
+    final email = _p?.email ?? '';
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay correo de sesión')),
+      );
+      return;
+    }
+    final ok = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CambiarDatoSolicitarPage(tipo: tipo, emailActual: email),
+      ),
+    );
+    if (ok == true) _cargar();
+  }
+
+  Future<void> _cerrar() async {
+    await PerfilPrefs.cerrarSesion();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -108,6 +76,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
 
   @override
   Widget build(BuildContext context) {
+    final p = _p;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -115,59 +84,55 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
           children: [
             const AppBarSimple(title: 'Mi Cuenta'),
             Expanded(
-              child: _loading
+              child: _loading || p == null
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          _avatar(),
+                          MiCuentaHeader(
+                            iniciales: _iniciales,
+                            nombre: p.nombre.split(RegExp(r'\s+')).take(2).join(' '),
+                            rol: p.rol,
+                          ),
                           const SizedBox(height: AppSpacing.extraLarge),
-                          _sectionTitle('Información Personal'),
-                          MiCuentaInfoCard(
-                            nombreCompleto: _nombreCompleto,
-                            email: _email,
-                            telefono: _telefono,
+                          _title('Información Personal'),
+                          MiCuentaNombreCard(nombre: p.nombre),
+                          MiCuentaCampoTile(
+                            label: 'CORREO ELECTRÓNICO',
+                            value: p.email,
+                            expanded: _emailExp,
+                            onToggle: () =>
+                                setState(() => _emailExp = !_emailExp),
+                            onCambiar: () => _irCambio(TipoCambioDato.email),
+                            botonTexto: 'Cambiar correo',
+                            icon: Icons.email_outlined,
+                          ),
+                          MiCuentaCampoTile(
+                            label: 'NÚMERO DE CONTACTO',
+                            value: p.telefono,
+                            expanded: _telExp,
+                            onToggle: () =>
+                                setState(() => _telExp = !_telExp),
+                            onCambiar: () =>
+                                _irCambio(TipoCambioDato.telefono),
+                            botonTexto: 'Cambiar número',
+                            icon: Icons.phone_outlined,
                           ),
                           const SizedBox(height: AppSpacing.large),
-                          _sectionTitle('Seguridad'),
+                          _title('Seguridad'),
                           MiCuentaPasswordTile(
-                            expanded: _passExpanded,
-                            onToggle: () => setState(
-                              () => _passExpanded = !_passExpanded,
+                            expanded: _pass,
+                            onToggle: () => setState(() => _pass = !_pass),
+                            onCambiar: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SolicitarCodigoPage(),
+                              ),
                             ),
-                            onCambiar: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const SolicitarCodigoPage(),
-                                ),
-                              );
-                            },
                           ),
                           const SizedBox(height: AppSpacing.extraLarge),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: OutlinedButton(
-                              onPressed: _cerrarSesion,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.error,
-                                side: const BorderSide(color: AppColors.error),
-                                backgroundColor: const Color(0xFFFFF0F0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.medium),
-                                ),
-                              ),
-                              child: Text(
-                                'Cerrar Sesión',
-                                style: AppTextStyles.button.copyWith(
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            ),
-                          ),
+                          _logout(),
                         ],
                       ),
                     ),
@@ -178,41 +143,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
     );
   }
 
-  Widget _avatar() {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 36,
-          backgroundColor: AppColors.editBackground,
-          child: Text(
-            _iniciales,
-            style: AppTextStyles.titleMedium.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          _nombre,
-          style: AppTextStyles.titleSmall.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          _rol,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.accent,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _sectionTitle(String t) => Align(
+  Widget _title(String t) => Align(
         alignment: Alignment.centerLeft,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -225,4 +156,23 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
           ),
         ),
       );
+
+  Widget _logout() => SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: OutlinedButton(
+          onPressed: _cerrar,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.error,
+            side: const BorderSide(color: AppColors.error),
+            backgroundColor: const Color(0xFFFFF0F0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.medium),
+            ),
+          ),
+          child: Text('Cerrar Sesión',
+              style: AppTextStyles.button.copyWith(color: AppColors.error)),
+        ),
+      );
+
 }

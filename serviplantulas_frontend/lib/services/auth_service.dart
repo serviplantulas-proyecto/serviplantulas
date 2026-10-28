@@ -118,7 +118,7 @@ class AuthService {
       url: ApiConfig.forgotPasswordUrl,
       body: {'email': email},
       fallbackMessage: 'No fue posible enviar el código de recuperación.',
-      timeout: const Duration(seconds: 30),
+      timeout: const Duration(seconds: 60),
     );
   }
 
@@ -135,6 +135,25 @@ class AuthService {
         'nuevaContrasena': nuevaContrasena,
       },
       fallbackMessage: 'No fue posible actualizar la contraseña.',
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
+   static Future<Map<String, dynamic>> cambiarDatoPerfil({
+    required String email,
+    required String codigo,
+    String? nuevoEmail,
+    String? nuevoTelefono,
+  }) async {
+    return _postAuth(
+      url: ApiConfig.verifyProfileChangeUrl,
+      body: {
+        'email': email,
+        'codigo': codigo,
+        if (nuevoEmail != null) 'nuevo_email': nuevoEmail,
+        if (nuevoTelefono != null) 'nuevo_telefono': nuevoTelefono,
+      },
+      fallbackMessage: 'No fue posible actualizar los datos.',
       timeout: const Duration(seconds: 30),
     );
   }
