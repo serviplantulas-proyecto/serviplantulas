@@ -1,6 +1,5 @@
 import express from "express";
-import { chatearConServiplantulas, obtenerHistorialServiplantulas } from "../controllers/chatbot-controller.js";
-
+import {chatearConServiplantulas, obtenerHistorialServiplantulas, listarSesionesChat,} from "../controllers/chatbot-controller.js";
 const router = express.Router();
 
 router.post("/", chatearConServiplantulas);
@@ -10,7 +9,7 @@ router.post("/", chatearConServiplantulas);
 //body: raw / json
 //estructura: { "mensaje": "hola" }
 
-
+router.get("/sesiones", listarSesionesChat);
 
 
 router.get("/historial/:sesionId", obtenerHistorialServiplantulas);

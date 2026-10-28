@@ -127,3 +127,41 @@ export const obtenerHistorialServiplantulas = async (req, res) => {
         return res.status(500).json({ message: "Error interno", error: error.message });
     }
 };
+
+export const listarSesionesChat = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("mensajes_chat")
+            .select("sesion_id, mensaje, created_at, emisor")
+            .order("created_at", { ascending: false })
+            .limit(500);
+
+        if (error) {
+            return res.status(500).json({
+                message: "Error al listar sesiones",
+                error: error.message,
+            });
+        }
+
+        const map = new Map();
+        for (const row of data || []) {
+            const id = row.sesion_id;
+            if (!id || map.has(id)) continue;
+            map.set(id, {
+                sesionId: id,
+                preview: row.mensaje || "",
+                ultimaFecha: row.created_at,
+                emisor: row.emisor,
+            });
+        }
+
+        return res.status(200).json({
+            sesiones: Array.from(map.values()),
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error interno",
+            error: error.message,
+        });
+    }
+};

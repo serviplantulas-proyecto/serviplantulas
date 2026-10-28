@@ -21,6 +21,9 @@ class ApiConfig {
 
   // ── Chat ──
   static String get chatbotUrl => '${_apiHost}chatbot/';
+  static String get chatbotSesionesUrl => '${chatbotUrl}sesiones';
+  static String chatbotHistorialUrl(String sesionId) =>
+      '${chatbotUrl}historial/$sesionId';
 
   // ── Productos ──
   // Backend: app.use("/productos", productosRouter)
