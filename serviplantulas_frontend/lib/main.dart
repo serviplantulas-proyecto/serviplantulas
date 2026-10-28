@@ -46,7 +46,8 @@ class MainApp extends StatelessWidget {
 //comando del token: ngrok config add-authtoken 3L3KIYhhybxJYXmSMVStIIRxDZW_ttp6Qj9TW5b1q7nfUtay
 //habilitar la puerta de enlace:  ngrok http 3000
 //pagina del ngrok: https://dashboard.ngrok.com/
-//comando para compilar el proyecto a apk: flutter build apk --debug --dart-define=API_BASE_URL=https://surging-gaffe-shell.ngrok-free.dev
+//comando para compilar el proyecto a apk con ngrok: flutter build apk --debug --dart-define=API_BASE_URL=https://surging-gaffe-shell.ngrok-free.dev
+//comando para compilar el proyeccto a apk normal: flutter build apk
 //se guarda en la carpeta \build\app\outputs\apk\debug\"archivo.apk"
 
 //cosas para modificar:
@@ -57,4 +58,5 @@ class MainApp extends StatelessWidget {
 //organizar el token de mantener inicio se secion - miercoles
 //organizar el boton de enviar por correo en "resumen de venta"  - miercoles
 //organizar el token de inicio se secion con google  - miercoles
+
 //organizar el orden el orden del menu mas - miercoles, en el sena
