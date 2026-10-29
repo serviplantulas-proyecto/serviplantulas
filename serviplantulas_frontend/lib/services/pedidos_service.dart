@@ -21,6 +21,7 @@ class PedidosService {
     required List<ItemVenta> items,
     String metodoPago = 'Efectivo',
     String? observaciones,
+    String? nombreCliente,
   }) async {
     if (items.isEmpty) {
       throw const PedidosException('Agrega al menos un producto.');
@@ -31,6 +32,8 @@ class PedidosService {
       {
         'id_cliente': idCliente,
         'metodo_pago': metodoPago,
+        if (nombreCliente != null && nombreCliente.isNotEmpty)
+          'nombre_cliente_snapshot': nombreCliente,
         if (observaciones != null && observaciones.isNotEmpty)
           'observaciones': observaciones,
       },
@@ -54,6 +57,7 @@ class PedidosService {
           'id_producto': item.producto.idProducto,
           'cantidad': item.cantidad,
           'precio_unitario': precio,
+          'nombre_producto_snapshot': item.producto.nombre,
         },
         token: token,
       );

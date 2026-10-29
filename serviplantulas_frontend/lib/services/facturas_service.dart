@@ -29,19 +29,30 @@ class FacturasService {
       final idClienteRaw = p['id_cliente'];
       final idCliente = idClienteRaw == null ? null : _asInt(idClienteRaw);
       final cliente = idCliente == null ? null : clienteMap[idCliente];
+
+      // Preferir snapshot (sobrevive al DELETE del cliente)
+      final nombreCliente = _str(p['nombre_cliente_snapshot']).isNotEmpty
+          ? _str(p['nombre_cliente_snapshot'])
+          : (cliente?.nombre ??
+              (idCliente == null ? 'Cliente eliminado' : 'Cliente #$idCliente'));
+
       final lineasRaw = porPedido[id] ?? const [];
       final lineas = lineasRaw.map((d) {
         final idProdRaw = d['id_producto'];
         final idProd = idProdRaw == null ? null : _asInt(idProdRaw);
         final prod = idProd == null ? null : productoMap[idProd];
+        final snap = _str(d['nombre_producto_snapshot']);
+        final nombre = snap.isNotEmpty
+            ? snap
+            : (prod?.nombre ??
+                (idProd == null ? 'Producto eliminado' : 'Producto #$idProd'));
         return FacturaLinea(
-          nombre:
-              prod?.nombre ??
-              (idProd == null ? 'Producto eliminado' : 'Producto #$idProd'),
+          nombre: nombre,
           cantidad: _asInt(d['cantidad']),
           unitario: _asDouble(d['precio_unitario']),
         );
       }).toList();
+
       final unidades = lineas.fold<int>(0, (s, l) => s + l.cantidad);
       final estadoRaw = (p['estado'] ?? 'completado').toString().toLowerCase();
       final estado = estadoRaw == 'pendiente' ? 'Pendiente' : 'Pagada';
@@ -50,9 +61,7 @@ class FacturasService {
       facturas.add(
         FacturaListItem(
           id: id.toString(),
-          cliente:
-              cliente?.nombre ??
-              (idCliente == null ? 'Cliente eliminado' : 'Cliente #$idCliente'),
+          cliente: nombreCliente,
           documento: cliente != null
               ? '${cliente.tipoDocumento} ${cliente.documento}'
               : null,
@@ -71,23 +80,15 @@ class FacturasService {
     return facturas;
   }
 
+  String _str(dynamic v) => (v?.toString() ?? '').trim();
+
   String _formatFecha(dynamic raw) {
     if (raw == null) return '—';
     try {
       final dt = DateTime.parse(raw.toString()).toLocal();
       const meses = [
-        'Ene',
-        'Feb',
-        'Mar',
-        'Abr',
-        'May',
-        'Jun',
-        'Jul',
-        'Ago',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dic',
+        'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+        'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
       ];
       return '${dt.day.toString().padLeft(2, '0')} ${meses[dt.month - 1]} ${dt.year}';
     } catch (_) {

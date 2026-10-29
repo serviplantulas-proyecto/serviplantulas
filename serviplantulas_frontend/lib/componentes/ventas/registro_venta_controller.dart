@@ -86,6 +86,7 @@ class RegistroVentaController {
       idCliente: cliente!.idCliente,
       items: items,
       metodoPago: metodoPago,
+      nombreCliente: cliente!.nombre, // snapshot
     );
   }
 }
