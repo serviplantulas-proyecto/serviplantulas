@@ -53,6 +53,13 @@ class MenuMasPage extends StatelessWidget {
                     onTap: () => _go(context, const ConfigurarAlertasPage()),
                   ),
                   MenuOptionTile(
+                    icon: Icons.notifications_outlined,
+                    title: 'Notificaciones',
+                    subtitle: 'Observa todas las notificaciones que has recibido ',
+                    iconBg: AppColors.infoBackground,
+                    onTap: () => _go(context, const NotificacionesPage()),
+                  ),
+                  MenuOptionTile(
                     icon: Icons.receipt_long_outlined,
                     title: 'Historial de Facturas',
                     subtitle: 'Revisar ventas e ingresos',
@@ -70,13 +77,6 @@ class MenuMasPage extends StatelessWidget {
                     subtitle: 'Accede a la IA de ServiPlantulas',
                     iconBg: AppColors.infoBackground,
                     onTap: () => _go(context, const ChatEvaPage()),
-                  ),
-                  MenuOptionTile(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notificaciones',
-                    subtitle: 'Observa todas las notificaciones que has recibido ',
-                    iconBg: AppColors.infoBackground,
-                    onTap: () => _go(context, const NotificacionesPage()),
                   ),
                 ],
               ),

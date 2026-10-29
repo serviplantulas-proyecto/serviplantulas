@@ -81,6 +81,15 @@ Para ejecutar correctamente el proyecto se deben configurar las variables de ent
 
 **Importante:** el archivo `.env` no debe subirse al repositorio de GitHub, ya que contiene información privada de configuración.
 
+### Eliminar clientes y productos conservando el historial
+
+Antes de desplegar el backend actualizado, ejecuta
+[`serviplantulas_backend/migrations/20261028_unlink_deleted_entities.sql`](./serviplantulas_backend/migrations/20261028_unlink_deleted_entities.sql)
+en el SQL Editor de Supabase. Esta migración permite dejar sin referencia al
+cliente/producto las ventas y notificaciones existentes, sin eliminar esos
+registros. Las ventas seguirán mostrando sus cantidades, precios y totales; la
+factura indicará «Cliente eliminado» o «Producto eliminado» cuando corresponda.
+
 ## 5. Comando para ejecutar el proyecto
 
 Para iniciar el backend en modo desarrollo:
