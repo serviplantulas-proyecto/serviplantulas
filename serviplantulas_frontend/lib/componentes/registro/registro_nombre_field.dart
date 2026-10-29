@@ -20,8 +20,8 @@ class RegistroNombreField extends StatelessWidget {
       textCapitalization: TextCapitalization.words,
       style: AppTextStyles.bodyMedium,
       decoration: InputDecoration(
-        labelText: 'Nombre completo',
-        hintText: 'Escribe tu nombre completo',
+        labelText: 'Nombres completos',
+        hintText: 'Escribe tus nombres completos',
         labelStyle: AppTextStyles.bodySmall.copyWith(
           color: AppColors.textSecondary,
         ),
