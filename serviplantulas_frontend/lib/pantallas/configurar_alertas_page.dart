@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
+import '../componentes/notificaciones/alerta_retencion_chips.dart';
 import '../componentes/notificaciones/alerta_switch_row.dart';
 import '../services/alertas_prefs_service.dart';
 import '../styles/app_colors.dart';
@@ -22,6 +23,7 @@ class _ConfigurarAlertasPageState extends State<ConfigurarAlertasPage> {
   bool _cliente = false;
   bool _factura = true;
   bool _diario = false;
+  int _retencionDias = 30;
   bool _loading = true;
   bool _saving = false;
 
@@ -35,11 +37,12 @@ class _ConfigurarAlertasPageState extends State<ConfigurarAlertasPage> {
     final f = await _prefs.cargar();
     if (!mounted) return;
     setState(() {
-      _stock = f['stock'] ?? true;
-      _venta = f['venta'] ?? true;
-      _cliente = f['cliente'] ?? false;
-      _factura = f['factura'] ?? true;
-      _diario = f['diario'] ?? false;
+      _stock = f['stock'] == true;
+      _venta = f['venta'] == true;
+      _cliente = f['cliente'] == true;
+      _factura = f['factura'] == true;
+      _diario = f['diario'] == true;
+      _retencionDias = f['retencionDias'] is int ? f['retencionDias'] as int : 30;
       _loading = false;
     });
   }
@@ -47,19 +50,14 @@ class _ConfigurarAlertasPageState extends State<ConfigurarAlertasPage> {
   Future<void> _guardar() async {
     setState(() => _saving = true);
     try {
-      await _prefs.guardar({
+      final msg = await _prefs.guardarYAplicar({
         'stock': _stock,
         'venta': _venta,
         'cliente': _cliente,
         'factura': _factura,
         'diario': _diario,
+        'retencionDias': _retencionDias,
       });
-      // Stock bajo → usa stock_minimo de cada producto
-      var msg = 'Configuración guardada';
-      if (_stock) {
-        final n = await _prefs.sincronizarStockBajo();
-        if (n > 0) msg = 'Guardado. $n alerta(s) de stock generada(s).';
-      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg),
@@ -116,44 +114,45 @@ class _ConfigurarAlertasPageState extends State<ConfigurarAlertasPage> {
                                 subtitle:
                                     'Avisar cuando un producto esté por debajo del límite.',
                                 value: _stock,
-                                onChanged: (v) =>
-                                    setState(() => _stock = v),
+                                onChanged: (v) => setState(() => _stock = v),
                               ),
                               AlertaSwitchRow(
                                 title: 'Venta Registrada',
                                 subtitle:
                                     'Recibir un resumen de cada venta efectuada.',
                                 value: _venta,
-                                onChanged: (v) =>
-                                    setState(() => _venta = v),
+                                onChanged: (v) => setState(() => _venta = v),
                               ),
                               AlertaSwitchRow(
                                 title: 'Nuevo Cliente',
                                 subtitle:
                                     'Notificar cuando se agregue un cliente al directorio.',
                                 value: _cliente,
-                                onChanged: (v) =>
-                                    setState(() => _cliente = v),
+                                onChanged: (v) => setState(() => _cliente = v),
                               ),
                               AlertaSwitchRow(
                                 title: 'Factura Pendiente',
                                 subtitle:
                                     'Recordatorio de cobro para facturas con pago pendiente.',
                                 value: _factura,
-                                onChanged: (v) =>
-                                    setState(() => _factura = v),
+                                onChanged: (v) => setState(() => _factura = v),
                               ),
                               AlertaSwitchRow(
                                 title: 'Recordatorio Diario',
                                 subtitle:
                                     'Alerta diaria para realizar la sincronización de inventario.',
                                 value: _diario,
-                                onChanged: (v) =>
-                                    setState(() => _diario = v),
+                                onChanged: (v) => setState(() => _diario = v),
                                 showDivider: false,
                               ),
                             ],
                           ),
+                        ),
+                        const SizedBox(height: AppSpacing.extraLarge),
+                        AlertaRetencionChips(
+                          diasSeleccionados: _retencionDias,
+                          onChanged: (d) =>
+                              setState(() => _retencionDias = d),
                         ),
                         const SizedBox(height: AppSpacing.extraLarge),
                         SizedBox(
@@ -164,11 +163,11 @@ class _ConfigurarAlertasPageState extends State<ConfigurarAlertasPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.accent,
                               foregroundColor: Colors.white,
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.circular(AppRadius.medium),
                               ),
-                              elevation: 0,
                             ),
                             child: _saving
                                 ? const SizedBox(

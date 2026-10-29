@@ -36,6 +36,7 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
   Proveedor? _proveedorSel;
   int _stockInicial = 0;
   File? _imagen;
+  bool _ocultarImagenUrl = false;
   bool _loadingMeta = true;
   bool _isLoading = false;
   String? _errorMeta;
@@ -121,8 +122,9 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
     final nombre = _nombreCtrl.text.trim();
     final precioVenta =
         double.tryParse(_precioVentaCtrl.text.replaceAll(',', '.')) ?? -1;
-    final precioCompra =
-        double.tryParse(_precioCompraCtrl.text.replaceAll(',', '.'));
+    final precioCompra = double.tryParse(
+      _precioCompraCtrl.text.replaceAll(',', '.'),
+    );
     final stockMin = int.tryParse(_stockMinimoCtrl.text.trim()) ?? 0;
 
     if (nombre.isEmpty) {
@@ -168,8 +170,9 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
       } else {
         await _service.crear(
           nombreProducto: nombre,
-          descripcionProducto:
-              _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+          descripcionProducto: _descCtrl.text.trim().isEmpty
+              ? null
+              : _descCtrl.text.trim(),
           precioProducto: precioVenta,
           costoCompra: precioCompra,
           stock: _stockInicial,
@@ -216,118 +219,131 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
               child: _loadingMeta
                   ? const Center(child: CircularProgressIndicator())
                   : _errorMeta != null
-                      ? _errorView()
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  ? _errorView()
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ProductoImageSelector(
+                            imagen: _imagen,
+                            imagenUrl: _ocultarImagenUrl
+                                ? null
+                                : widget.producto?.imagenUrl,
+                            habilitado: !_isLoading,
+                            onImagenSeleccionada: (file) {
+                              setState(() {
+                                _imagen = file;
+                                _ocultarImagenUrl = false;
+                              });
+                            },
+                            onQuitar: () {
+                              setState(() {
+                                _imagen = null;
+                                _ocultarImagenUrl = true;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.large),
+                          ProductoCampoTexto(
+                            label: 'Nombre del Producto',
+                            controller: _nombreCtrl,
+                            hint: 'Ej. Helecho Boston Maceta 10"',
+                          ),
+                          const SizedBox(height: AppSpacing.large),
+                          if (_categorias.isNotEmpty)
+                            ProductoDropdownField(
+                              label: 'Categoría',
+                              value:
+                                  _categoriaSel?.nombreCategoria ??
+                                  _categorias.first.nombreCategoria,
+                              options: _categorias
+                                  .map((c) => c.nombreCategoria)
+                                  .toList(),
+                              onChanged: (nombre) {
+                                setState(() {
+                                  _categoriaSel = _categorias.firstWhere(
+                                    (c) => c.nombreCategoria == nombre,
+                                  );
+                                });
+                              },
+                            ),
+                          const SizedBox(height: AppSpacing.large),
+                          Row(
                             children: [
-                              ProductoImageSelector(
-                                imagen: _imagen,
-                                imagenUrl: widget.producto?.imagenUrl,
-                                habilitado: !_isLoading,
-                                onImagenSeleccionada: (file) {
-                                  setState(() => _imagen = file);
-                                },
-                              ),
-                              const SizedBox(height: AppSpacing.large),
-                              ProductoCampoTexto(
-                                label: 'Nombre del Producto',
-                                controller: _nombreCtrl,
-                                hint: 'Ej. Helecho Boston Maceta 10"',
-                              ),
-                              const SizedBox(height: AppSpacing.large),
-                              if (_categorias.isNotEmpty)
-                                ProductoDropdownField(
-                                  label: 'Categoría',
-                                  value: _categoriaSel?.nombreCategoria ??
-                                      _categorias.first.nombreCategoria,
-                                  options: _categorias
-                                      .map((c) => c.nombreCategoria)
-                                      .toList(),
-                                  onChanged: (nombre) {
-                                    setState(() {
-                                      _categoriaSel = _categorias.firstWhere(
-                                        (c) => c.nombreCategoria == nombre,
-                                      );
-                                    });
-                                  },
+                              Expanded(
+                                child: ProductoCampoTexto(
+                                  label: 'Precio de Compra',
+                                  controller: _precioCompraCtrl,
+                                  hint: '0',
+                                  keyboard: TextInputType.number,
                                 ),
-                              const SizedBox(height: AppSpacing.large),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ProductoCampoTexto(
-                                      label: 'Precio de Compra',
-                                      controller: _precioCompraCtrl,
-                                      hint: '0',
-                                      keyboard: TextInputType.number,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: ProductoCampoTexto(
-                                      label: 'Precio de Venta',
-                                      controller: _precioVentaCtrl,
-                                      hint: '0',
-                                      keyboard: TextInputType.number,
-                                    ),
-                                  ),
-                                ],
                               ),
-                              const SizedBox(height: AppSpacing.large),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ProductoCampoTexto(
-                                      label: 'Stock mínimo',
-                                      controller: _stockMinimoCtrl,
-                                      hint: '5',
-                                      keyboard: TextInputType.number,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: ProductoCampoStock(
-                                      value: _stockInicial,
-                                      onChanged: (v) =>
-                                          setState(() => _stockInicial = v),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.large),
-                              if (_proveedores.isNotEmpty)
-                                ProductoDropdownField(
-                                  label: 'Proveedor',
-                                  value: _proveedorSel?.nombreProveedor ??
-                                      _proveedores.first.nombreProveedor,
-                                  options: _proveedores
-                                      .map((p) => p.nombreProveedor)
-                                      .toList(),
-                                  onChanged: (nombre) {
-                                    setState(() {
-                                      _proveedorSel = _proveedores.firstWhere(
-                                        (p) => p.nombreProveedor == nombre,
-                                      );
-                                    });
-                                  },
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ProductoCampoTexto(
+                                  label: 'Precio de Venta',
+                                  controller: _precioVentaCtrl,
+                                  hint: '0',
+                                  keyboard: TextInputType.number,
                                 ),
-                              const SizedBox(height: AppSpacing.large),
-                              ProductoCampoTexto(
-                                label: 'Descripción',
-                                controller: _descCtrl,
-                                hint: 'Descripción del producto...',
-                                maxLines: 3,
-                              ),
-                              const SizedBox(height: AppSpacing.extraLarge),
-                              ProductoBotonGuardar(
-                                isLoading: _isLoading,
-                                onPressed: _guardar,
                               ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: AppSpacing.large),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ProductoCampoTexto(
+                                  label: 'Stock mínimo',
+                                  controller: _stockMinimoCtrl,
+                                  hint: '5',
+                                  keyboard: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ProductoCampoStock(
+                                  value: _stockInicial,
+                                  onChanged: (v) =>
+                                      setState(() => _stockInicial = v),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.large),
+                          if (_proveedores.isNotEmpty)
+                            ProductoDropdownField(
+                              label: 'Proveedor',
+                              value:
+                                  _proveedorSel?.nombreProveedor ??
+                                  _proveedores.first.nombreProveedor,
+                              options: _proveedores
+                                  .map((p) => p.nombreProveedor)
+                                  .toList(),
+                              onChanged: (nombre) {
+                                setState(() {
+                                  _proveedorSel = _proveedores.firstWhere(
+                                    (p) => p.nombreProveedor == nombre,
+                                  );
+                                });
+                              },
+                            ),
+                          const SizedBox(height: AppSpacing.large),
+                          ProductoCampoTexto(
+                            label: 'Descripción',
+                            controller: _descCtrl,
+                            hint: 'Descripción del producto...',
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: AppSpacing.extraLarge),
+                          ProductoBotonGuardar(
+                            isLoading: _isLoading,
+                            onPressed: _guardar,
+                          ),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
@@ -348,10 +364,7 @@ class _RegistrarProductoPageState extends State<RegistrarProductoPage> {
               style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
-            TextButton(
-              onPressed: _cargarMeta,
-              child: const Text('Reintentar'),
-            ),
+            TextButton(onPressed: _cargarMeta, child: const Text('Reintentar')),
           ],
         ),
       ),

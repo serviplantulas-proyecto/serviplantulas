@@ -14,6 +14,8 @@ class NotificacionesException implements Exception {
   String toString() => message;
 }
 
+
+
 class NotificacionItem {
   final int id;
   final String titulo;
@@ -71,6 +73,27 @@ class NotificacionesService {
     } catch (_) {
       return 0;
     }
+  }
+
+  Future<int> limpiarAntiguas(int dias) async {
+    final token = await _token();
+    final r = await http
+        .post(
+          Uri.parse(ApiConfig.notificacionesLimpiarUrl),
+          headers: ApiConfig.authHeaders(token),
+          body: jsonEncode({'dias': dias}),
+        )
+        .timeout(const Duration(seconds: 20));
+    final d = _decode(r);
+    if (r.statusCode < 200 || r.statusCode >= 300) {
+      throw NotificacionesException(_err(d, 'No se pudo limpiar.'));
+    }
+    if (d is Map && d['eliminadas'] != null) {
+      final v = d['eliminadas'];
+      if (v is int) return v;
+      return int.tryParse(v.toString()) ?? 0;
+    }
+    return 0;
   }
 
   Future<void> marcarLeida(int id) async {

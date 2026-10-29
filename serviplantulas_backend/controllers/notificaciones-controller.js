@@ -148,3 +148,29 @@ export const eliminar = async (req, res) => {
         });
     }
 };
+
+export const limpiarAntiguas = async (req, res) => {
+    try {
+        const dias = parseInt(req.body?.dias ?? req.query?.dias, 10);
+        const permitidos = [7, 30, 90, 180, 365];
+        if (!permitidos.includes(dias)) {
+            return res.status(400).json({
+                error: "dias debe ser 7, 30, 90, 180 o 365"
+            });
+        }
+        const { error, eliminadas } = await eliminarAntiguas(dias);
+        if (error) {
+            console.error("limpiarAntiguas:", error);
+            return res.status(500).json({
+                error: "Error al limpiar notificaciones antiguas"
+            });
+        }
+        return res.status(200).json({
+            message: "Limpieza completada",
+            dias,
+            eliminadas
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};

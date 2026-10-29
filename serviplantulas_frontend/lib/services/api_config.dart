@@ -56,6 +56,8 @@ class ApiConfig {
   static String get notificacionesNoLeidasUrl =>
       '${notificacionesUrl}no-leidas';
   static String notificacionLeidaUrl(int id) => '${notificacionesUrl}$id/leida';
+  static String get notificacionesLimpiarUrl =>
+      '${notificacionesUrl}limpiar-antiguas';
 
   static String get _apiHost {
     if (useRemote) {

@@ -58,3 +58,17 @@ export const eliminarNotificacion = async (id) => {
         .eq("id_notificacion", id);
     return { data, error };
 };
+
+export const eliminarAntiguas = async (dias) => {
+    const limite = new Date();
+    limite.setDate(limite.getDate() - dias);
+    const iso = limite.toISOString();
+
+    const { data, error } = await supabase
+        .from("notificaciones")
+        .delete()
+        .lt("creada_en", iso)
+        .select("id_notificacion");
+
+    return { data, error, eliminadas: data?.length ?? 0 };
+};

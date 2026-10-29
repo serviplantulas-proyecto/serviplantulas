@@ -6,7 +6,8 @@ import {
     obtenerNotificacion,
     crear,
     marcarLeida,
-    eliminar
+    eliminar,
+    limpiarAntiguas
 } from "../controllers/notificaciones-controller.js";
 
 import { verificarToken } from "../middlewares/middlewares.js";
@@ -98,5 +99,9 @@ router.put("/:id/leida", marcarLeida);
 // Authorization: Bearer Token
 
 router.delete("/:id", eliminar);
+
+router.post("/limpiar-antiguas", limpiarAntiguas);
+// POST body: { "dias": 30 }
+// Debe ir ANTES de router.get("/:id", ...)
 
 export default router;

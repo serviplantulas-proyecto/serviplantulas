@@ -9,12 +9,12 @@ import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
 
-/// Selector de foto del producto (galería, cámara o drag & drop en desktop).
-/// Adaptado de la guía ADSO (AdminImageSelector).
+/// Selector de foto (galería, cámara, drag & drop) con opción de quitar.
 class ProductoImageSelector extends StatefulWidget {
   final File? imagen;
   final String? imagenUrl;
   final ValueChanged<File> onImagenSeleccionada;
+  final VoidCallback? onQuitar;
   final bool habilitado;
 
   const ProductoImageSelector({
@@ -22,6 +22,7 @@ class ProductoImageSelector extends StatefulWidget {
     required this.imagen,
     required this.onImagenSeleccionada,
     this.imagenUrl,
+    this.onQuitar,
     this.habilitado = true,
   });
 
@@ -32,6 +33,13 @@ class ProductoImageSelector extends StatefulWidget {
 class _ProductoImageSelectorState extends State<ProductoImageSelector> {
   final _picker = ImagePicker();
   bool _arrastrando = false;
+
+  bool get _tieneImagen {
+    final local = widget.imagen != null;
+    final url =
+        widget.imagenUrl != null && widget.imagenUrl!.trim().isNotEmpty;
+    return local || url;
+  }
 
   Future<void> _elegir(ImageSource source) async {
     if (!widget.habilitado) return;
@@ -83,6 +91,15 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
                 _elegir(ImageSource.camera);
               },
             ),
+            if (_tieneImagen && widget.onQuitar != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                title: const Text('Quitar imagen'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  widget.onQuitar!();
+                },
+              ),
             const SizedBox(height: 8),
           ],
         ),
@@ -96,35 +113,55 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
     final tieneUrl =
         widget.imagenUrl != null && widget.imagenUrl!.trim().isNotEmpty;
 
+    Widget preview = Container(
+      width: double.infinity,
+      height: 180,
+      decoration: BoxDecoration(
+        color: _arrastrando ? AppColors.editBackground : AppColors.neutral,
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        border: Border.all(
+          color: _arrastrando ? AppColors.primary : AppColors.border,
+          width: _arrastrando ? 2 : 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: tieneLocal
+          ? Image.file(widget.imagen!, fit: BoxFit.cover)
+          : tieneUrl
+              ? Image.network(
+                  widget.imagenUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _placeholder(),
+                )
+              : _placeholder(),
+    );
+
     Widget contenido = GestureDetector(
       onTap: _mostrarOpciones,
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        decoration: BoxDecoration(
-          color: _arrastrando
-              ? AppColors.editBackground
-              : AppColors.neutral,
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          border: Border.all(
-            color: _arrastrando ? AppColors.primary : AppColors.border,
-            width: _arrastrando ? 2 : 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: tieneLocal
-            ? Image.file(widget.imagen!, fit: BoxFit.cover)
-            : tieneUrl
-                ? Image.network(
-                    widget.imagenUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(),
-                  )
-                : _placeholder(),
+      child: Stack(
+        children: [
+          preview,
+          if (_tieneImagen && widget.onQuitar != null && widget.habilitado)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Material(
+                color: Colors.black54,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: widget.onQuitar,
+                  child: const Padding(
+                    padding: EdgeInsets.all(6),
+                    child: Icon(Icons.close, size: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
 
-    // Drag & drop solo en desktop (no web / no móvil puro)
     if (!kIsWeb &&
         (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       contenido = DropTarget(
@@ -132,7 +169,7 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
         onDragExited: (_) => setState(() => _arrastrando = false),
         onDragDone: (detail) {
           setState(() => _arrastrando = false);
-          if (detail.files.isEmpty) return;
+          if (detail.files.isEmpty || !widget.habilitado) return;
           final path = detail.files.first.path;
           final ext = path.split('.').last.toLowerCase();
           if (!['jpg', 'jpeg', 'png', 'webp', 'avif'].contains(ext)) {
@@ -164,8 +201,10 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
         contenido,
         const SizedBox(height: 6),
         Text(
-          'Toca para elegir galería o cámara'
-          '${(!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) ? ' · o arrastra una imagen' : ''}',
+          _tieneImagen
+              ? 'Toca para cambiar · o usa la X para quitar'
+              : 'Toca para elegir galería o cámara'
+                  '${(!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) ? ' · o arrastra una imagen' : ''}',
           style: AppTextStyles.label.copyWith(color: AppColors.textMuted),
         ),
       ],
@@ -177,11 +216,7 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.add_a_photo_outlined,
-            size: 40,
-            color: AppColors.mutedGreen,
-          ),
+          Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.mutedGreen),
           const SizedBox(height: 8),
           Text(
             'Agregar imagen',
