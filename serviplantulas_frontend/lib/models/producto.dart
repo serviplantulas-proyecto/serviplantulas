@@ -58,8 +58,9 @@ class Producto {
       imagenUrl: json['imagen_url']?.toString(),
       nombreCategoria: json['nombre_categoria']?.toString() ??
           json['categorias']?['nombre_categoria']?.toString(),
-      nombreProveedor: json['nombre_proveedor']?.toString() ??
-          json['proveedores']?['nombre_proveedor']?.toString(),
+      nombreProveedor: json['nombre_proveedor_snapshot']?.toString() ??
+    json['nombre_proveedor']?.toString() ??
+    json['proveedores']?['nombre_proveedor']?.toString(),
     );
   }
 

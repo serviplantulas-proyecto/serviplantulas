@@ -25,9 +25,8 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
   final _direccionCtrl = TextEditingController();
   final _ciudadCtrl = TextEditingController();
   final Set<String> _productosSel = {};
-  bool _isLoading = false;
-
-  bool get _esEdicion => widget.proveedor != null;
+  bool _loading = false;
+  bool get _edit => widget.proveedor != null;
 
   @override
   void initState() {
@@ -45,10 +44,10 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
     } else if (dir != null) {
       _direccionCtrl.text = dir;
     }
-    _cargarExtras(p.idProveedor);
+    _loadExtras(p.idProveedor);
   }
 
-  Future<void> _cargarExtras(int id) async {
+  Future<void> _loadExtras(int id) async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
@@ -59,13 +58,13 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
     });
   }
 
-  Future<void> _guardarExtras(int id) async {
+  Future<void> _saveExtras(int id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('prov_nit_$id', _nitCtrl.text.trim());
     await prefs.setStringList('prov_prods_$id', _productosSel.toList());
   }
 
-  String get _dirCompleta {
+  String get _dir {
     final c = _ciudadCtrl.text.trim();
     final d = _direccionCtrl.text.trim();
     if (c.isNotEmpty && d.isNotEmpty) return '$c | $d';
@@ -74,62 +73,100 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
 
   @override
   void dispose() {
-    _nombreCtrl.dispose();
-    _nitCtrl.dispose();
-    _telCtrl.dispose();
-    _emailCtrl.dispose();
-    _direccionCtrl.dispose();
-    _ciudadCtrl.dispose();
+    for (final c in [
+      _nombreCtrl, _nitCtrl, _telCtrl, _emailCtrl, _direccionCtrl, _ciudadCtrl
+    ]) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  void _snack(String m, {bool err = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(m),
+      backgroundColor: err ? AppColors.error : AppColors.success,
+    ));
   }
 
   Future<void> _guardar() async {
     final nombre = _nombreCtrl.text.trim();
     if (nombre.isEmpty) {
-      _snack('El nombre / razón social es obligatorio', error: true);
+      _snack('El nombre / razón social es obligatorio', err: true);
       return;
     }
-    setState(() => _isLoading = true);
+    setState(() => _loading = true);
     try {
-      final dir = _dirCompleta;
-      if (_esEdicion) {
+      if (_edit) {
         final id = widget.proveedor!.idProveedor;
         await _service.actualizar(id: id, campos: {
           'nombre_proveedor': nombre,
           'telefono_proveedor': _telCtrl.text.trim(),
           'email_proveedor': _emailCtrl.text.trim(),
-          'direccion_proveedor': dir,
+          'direccion_proveedor': _dir,
         });
-        await _guardarExtras(id);
-        if (!mounted) return;
-        _snack('Proveedor actualizado');
+        await _saveExtras(id);
+        if (mounted) _snack('Proveedor actualizado');
       } else {
         String? n(String s) => s.trim().isEmpty ? null : s.trim();
         final creado = await _service.crear(
           nombreProveedor: nombre,
           telefonoProveedor: n(_telCtrl.text),
           emailProveedor: n(_emailCtrl.text),
-          direccionProveedor: dir.isEmpty ? null : dir,
+          direccionProveedor: _dir.isEmpty ? null : _dir,
         );
-        await _guardarExtras(creado.idProveedor);
-        if (!mounted) return;
-        _snack('Proveedor guardado');
+        await _saveExtras(creado.idProveedor);
+        if (mounted) _snack('Proveedor guardado');
       }
-      Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, true);
     } on ProveedoresException catch (e) {
-      if (mounted) _snack(e.message, error: true);
+      if (mounted) _snack(e.message, err: true);
     } catch (_) {
-      if (mounted) _snack('Error al guardar', error: true);
+      if (mounted) _snack('Error al guardar', err: true);
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _snack(String msg, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: error ? AppColors.error : AppColors.success,
-    ));
+  Future<void> _eliminar() async {
+    final id = widget.proveedor?.idProveedor;
+    if (id == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar proveedor'),
+        content: const Text(
+          '¿Eliminar este proveedor? Los productos vinculados '
+          'quedarán sin proveedor asignado.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _loading = true);
+    try {
+      await _service.eliminar(id);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('prov_nit_$id');
+      await prefs.remove('prov_prods_$id');
+      if (!mounted) return;
+      _snack('Proveedor eliminado');
+      Navigator.pop(context, true);
+    } on ProveedoresException catch (e) {
+      if (mounted) _snack(e.message, err: true);
+    } catch (_) {
+      if (mounted) _snack('No se pudo eliminar', err: true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -140,7 +177,7 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
         child: Column(
           children: [
             AppBarSimple(
-              title: _esEdicion ? 'Editar Proveedor' : 'Agregar Proveedor',
+              title: _edit ? 'Editar Proveedor' : 'Agregar Proveedor',
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -159,19 +196,25 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
                 ),
               ),
             ),
-            Container(
-              width: double.infinity,
+            Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              decoration: const BoxDecoration(
-                color: AppColors.background,
-                border: Border(
-                  top: BorderSide(color: AppColors.border, width: 0.5),
-                ),
-              ),
-              child: AppButton(
-                text: 'Guardar Proveedor',
-                isLoading: _isLoading,
-                onPressed: _guardar,
+              child: Column(
+                children: [
+                  AppButton(
+                    text: 'Guardar Proveedor',
+                    isLoading: _loading,
+                    onPressed: _loading ? null : _guardar,
+                  ),
+                  if (_edit) ...[
+                    const SizedBox(height: 10),
+                    AppButton(
+                      text: 'Eliminar Proveedor',
+                      type: AppButtonType.danger,
+                      isLoading: _loading,
+                      onPressed: _loading ? null : _eliminar,
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
