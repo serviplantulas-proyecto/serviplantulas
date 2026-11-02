@@ -19,16 +19,17 @@ class InventorySearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, size: 18, color: AppColors.textMuted),
-          const SizedBox(width: 10),
+          const Icon(Icons.search, size: 22, color: AppColors.textMuted),
+          const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: controller,
@@ -41,7 +42,7 @@ class InventorySearchBar extends StatelessWidget {
                 ),
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),

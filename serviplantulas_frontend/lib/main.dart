@@ -52,8 +52,6 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-//agrandar un poquito los inputs de los buscadores(searhs)
-//organizar los limites en los inputs numericos - miercoles
 //organizar el hacer que llegue la notificaciones segun lo guardado en "configurar alertas" - miercoles
 //organizar que al hacer una venta el stock del inventario baje y en el dashboard tambien - miercoles
 //organizar el token de mantener inicio se secion - miercoles

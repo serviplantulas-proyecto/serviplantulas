@@ -52,6 +52,8 @@ class _RegistroPageState extends State<RegistroPage> {
       error = 'Ingresa un correo electrónico válido.';
     } else if (digitosTelefono < 7 || digitosTelefono > 15) {
       error = 'Ingresa un número de contacto válido.';
+    } else if (digitosTelefono != 10) {
+      error = 'El número de contacto debe tener 10 dígitos.';
     } else if (contrasena.length < 8) {
       error = 'La contraseña debe tener al menos 8 caracteres.';
     } else if (contrasena != _confirmPasswordController.text) {

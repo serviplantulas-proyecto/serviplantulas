@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import '../compartidos/input_formatters.dart';
 
 class ProveedorFormLabel extends StatelessWidget {
   final String text;
@@ -35,11 +37,18 @@ class ProveedorFormField extends StatelessWidget {
     this.keyboard = TextInputType.text,
   });
 
+  List<TextInputFormatter>? get _formatters {
+    if (keyboard == TextInputType.phone) return phone10Formatters;
+    if (keyboard == TextInputType.number) return nonNegativeIntFormatters;
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       keyboardType: keyboard,
+      inputFormatters: _formatters,
       style: AppTextStyles.bodyMedium,
       decoration: InputDecoration(
         hintText: hint,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../componentes/compartidos/input_formatters.dart';
 import '../componentes/recuperar_contrasena/recuperar_badge.dart';
 import '../componentes/recuperar_contrasena/recuperar_button.dart';
 import '../componentes/recuperar_contrasena/recuperar_header.dart';
@@ -10,6 +10,7 @@ import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_text_styles.dart';
 import 'cambiar_dato_solicitar_page.dart';
+
 
 class CambiarDatoVerificarPage extends StatefulWidget {
   final TipoCambioDato tipo;
@@ -25,6 +26,7 @@ class CambiarDatoVerificarPage extends StatefulWidget {
   State<CambiarDatoVerificarPage> createState() =>
       _CambiarDatoVerificarPageState();
 }
+
 
 class _CambiarDatoVerificarPageState extends State<CambiarDatoVerificarPage> {
   final _codigoCtrl = TextEditingController();

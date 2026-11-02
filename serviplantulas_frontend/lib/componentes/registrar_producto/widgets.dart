@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../boton/app_button.dart';
 import '../compartidos/form_dropdown.dart';
+import '../compartidos/input_formatters.dart';
 import '../compartidos/qty_stepper.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
@@ -23,6 +25,15 @@ class ProductoCampoTexto extends StatelessWidget {
   final TextInputType keyboard;
   final int maxLines;
 
+  List<TextInputFormatter>? get _formatters {
+    if (keyboard != TextInputType.number) return null;
+    // Precios permiten decimal; stock mínimo usa number → no negativos
+    if (hint == '5' || label.toLowerCase().contains('stock')) {
+      return nonNegativeIntFormatters;
+    }
+    return nonNegativeDecimalFormatters;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -33,6 +44,7 @@ class ProductoCampoTexto extends StatelessWidget {
           controller: controller,
           keyboardType: keyboard,
           maxLines: maxLines,
+          inputFormatters: _formatters,
           style: AppTextStyles.bodyMedium,
           decoration: _productoDecoration(hint),
         ),
@@ -82,7 +94,7 @@ class ProductoCampoStock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _ProductoLabel('Stock Inicial'),
-        QtyStepper(value: value, onChanged: onChanged),
+        QtyStepper(value: value, onChanged: onChanged, min: 0),
       ],
     );
   }
@@ -110,7 +122,6 @@ class ProductoBotonGuardar extends StatelessWidget {
 
 class _ProductoLabel extends StatelessWidget {
   const _ProductoLabel(this.text);
-
   final String text;
 
   @override

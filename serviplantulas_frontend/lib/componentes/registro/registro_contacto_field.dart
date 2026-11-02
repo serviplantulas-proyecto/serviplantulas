@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import '../compartidos/input_formatters.dart';
 
 class RegistroContactoField extends StatelessWidget {
   final TextEditingController controller;
@@ -17,10 +19,11 @@ class RegistroContactoField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.phone,
+      inputFormatters: phone10Formatters,
       style: AppTextStyles.bodyMedium,
       decoration: InputDecoration(
         labelText: 'Número de contacto',
-        hintText: '300 000 0000',
+        hintText: '3001234567',
         labelStyle: AppTextStyles.bodySmall.copyWith(
           color: AppColors.textSecondary,
         ),
@@ -38,29 +41,16 @@ class RegistroContactoField extends StatelessWidget {
           vertical: 12,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AppRadius.medium,
-          ),
-          borderSide: const BorderSide(
-            color: AppColors.border,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AppRadius.medium,
-          ),
-          borderSide: const BorderSide(
-            color: AppColors.border,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AppRadius.medium,
-          ),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
       ),
     );

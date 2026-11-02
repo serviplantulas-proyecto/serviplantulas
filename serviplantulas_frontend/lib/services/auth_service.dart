@@ -22,7 +22,7 @@ class AuthService {
     required String url,
     required Map<String, Object?> body,
     required String fallbackMessage,
-    Duration timeout = const Duration(seconds: 15),
+    Duration timeout = const Duration(seconds: 30),
   }) async {
     late final http.Response response;
     try {

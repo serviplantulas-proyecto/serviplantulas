@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import '../compartidos/input_formatters.dart';
 
 class ClienteFormLabel extends StatelessWidget {
   final String text;
@@ -29,6 +31,7 @@ class ClienteFormField extends StatelessWidget {
   final IconData? icon;
   final String? prefix;
   final TextInputType keyboard;
+  final List<TextInputFormatter>? inputFormatters;
 
   const ClienteFormField({
     super.key,
@@ -37,13 +40,22 @@ class ClienteFormField extends StatelessWidget {
     this.icon,
     this.prefix,
     this.keyboard = TextInputType.text,
+    this.inputFormatters,
   });
+
+  List<TextInputFormatter>? get _formatters {
+    if (inputFormatters != null) return inputFormatters;
+    if (keyboard == TextInputType.phone) return phone10Formatters;
+    if (keyboard == TextInputType.number) return nonNegativeIntFormatters;
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       keyboardType: keyboard,
+      inputFormatters: _formatters,
       style: AppTextStyles.bodyMedium,
       decoration: InputDecoration(
         hintText: hint,
