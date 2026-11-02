@@ -1,5 +1,6 @@
 import {obtenerTodos, obtenerPorId, obtenerPorPedido, crearDetalle, actualizarDetalle, eliminarDetalle} from "../models/detalle-pedidos-model.js";
 import { obtenerPorId as obtenerProductoPorId } from "../models/productos-model.js";
+import { descontarStockYAlertar } from "./stock_alerta_helper.js";
 
 export const listarDetalles = async (req, res) => {
     try {
@@ -110,6 +111,15 @@ export const crear = async (req, res) => {
             return res.status(500).json({
                 error: "Error al agregar el producto al pedido"
             });
+        }
+
+        // Descontar stock + alerta si llega al mínimo
+        const { error: stockError } = await descontarStockYAlertar(
+            producto,
+            cantidad
+        );
+        if (stockError) {
+            console.error("Error descontar stock:", stockError);
         }
 
         return res.status(201).json({

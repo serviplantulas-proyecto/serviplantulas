@@ -7,6 +7,7 @@ import {
     eliminarProducto
 } from "../models/productos-model.js";
 import { obtenerPorId as obtenerProveedorPorId } from "../models/proveedores-model.js";
+import { notificarStockBajoSiAplica } from "./stock_alerta_helper.js";
 
 async function resolverSnapshotProveedor(idProveedor, snapshotBody) {
     if (typeof snapshotBody === "string" && snapshotBody.trim()) {
@@ -100,6 +101,10 @@ export const crear = async (req, res) => {
             return res.status(500).json({ error: "Error al crear el producto" });
         }
 
+        if (data?.[0]) {
+            await notificarStockBajoSiAplica(data[0]);
+        }
+
         return res.status(201).json({
             message: "Producto creado",
             producto: data[0]
@@ -133,9 +138,15 @@ export const editar = async (req, res) => {
             return res.status(500).json({ error: "Error al actualizar el producto" });
         }
 
+        // Recargar producto completo para stock + mínimo + nombre
+        const { data: full } = await obtenerPorId(id);
+        if (full) {
+            await notificarStockBajoSiAplica(full);
+        }
+
         return res.status(200).json({
             message: "Producto actualizado",
-            producto: data[0]
+            producto: data?.[0] ?? full
         });
     } catch (error) {
         return res.status(500).json({ error: error.message });
