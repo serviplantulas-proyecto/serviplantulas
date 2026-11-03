@@ -1,4 +1,4 @@
-import {obtenerTodos, obtenerPorId, crearPedido, actualizarPedido, eliminarPedido} from "../models/pedidos-model.js";
+import { enviarResumenFactura } from "../services/email-service.js";
 import { obtenerPorId as obtenerClientePorId } from "../models/clientes-model.js";
 
 export const listarPedidos = async (req, res) => {
@@ -110,6 +110,53 @@ export const eliminar = async (req, res) => {
             return res.status(500).json({ error: "Error al eliminar el pedido" });
         }
         return res.status(200).json({ message: "Pedido eliminado" });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+export const enviarFacturaCorreo = async (req, res) => {
+    try {
+        const factura = req.body?.factura || req.body;
+        if (!factura || !factura.id) {
+            return res.status(400).json({
+                error: "Se requiere el objeto factura con al menos id"
+            });
+        }
+
+        let email = (req.body.email || "").toString().trim();
+        let nombre = (req.body.nombre || "").toString().trim();
+
+        if (!email && req.usuario?.id) {
+            const { data: user } = await obtenerUsuarioPorId(req.usuario.id);
+            if (user) {
+                email = user.email_usuarios || "";
+                nombre =
+                    nombre ||
+                    [user.nombre_usuarios, user.apellido_usuarios]
+                        .filter(Boolean)
+                        .join(" ") ||
+                    email;
+            }
+        }
+
+        if (!email) {
+            return res.status(400).json({
+                error: "No se encontró el correo de la cuenta"
+            });
+        }
+
+        const result = await enviarResumenFactura(email, nombre || email, factura);
+        if (!result.exito) {
+            return res.status(500).json({
+                error: "No se pudo enviar el correo. Revisa la configuración de Brevo."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Factura enviada al correo",
+            email
+        });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }

@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:serviplantulas_frontend/pantallas/registro.dart';
-import '../services/auth_service.dart';
 
-import '../componentes/login/login_logo.dart';
-import '../componentes/login/login_email_field.dart';
-import '../componentes/login/login_password_field.dart';
 import '../componentes/login/login_button.dart';
-import '../componentes/login/login_forgot_password.dart';
-import '../componentes/login/login_register.dart';
-import '../componentes/login/login_google_button.dart';
+import '../componentes/login/login_email_field.dart';
 import '../componentes/login/login_footer.dart';
+import '../componentes/login/login_forgot_password.dart';
+import '../componentes/login/login_google_button.dart';
+import '../componentes/login/login_logo.dart';
+import '../componentes/login/login_password_field.dart';
+import '../componentes/login/login_register.dart';
+import '../services/auth_service.dart';
+import '../services/session_service.dart';
+import '../styles/app_spacing.dart';
 import 'home_shell.dart';
 import 'solicitar_codigo_page.dart';
-import '../styles/app_spacing.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final VoidCallback? onLoginSuccess;
+
+  const LoginPage({super.key, this.onLoginSuccess});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -23,9 +26,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
-
   final TextEditingController _passwordController = TextEditingController();
-
   bool _isLoading = false;
 
   @override
@@ -42,16 +43,20 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         contrasena: _passwordController.text,
       );
+      await SessionService().touchActivity();
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeShell()),
-      );
+      if (widget.onLoginSuccess != null) {
+        widget.onLoginSuccess!();
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeShell()),
+        );
+      }
     } on AuthException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -72,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _iniciarConGoogle() {
-    // Aquí conectaremos posteriormente Google Sign-In.
+    // Google Sign-In pendiente
   }
 
   @override
@@ -91,36 +96,22 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const LoginLogo(),
-
                   const SizedBox(height: AppSpacing.huge),
-
                   LoginEmailField(controller: _emailController),
-
                   const SizedBox(height: AppSpacing.medium),
-
                   LoginPasswordField(controller: _passwordController),
-
                   const SizedBox(height: AppSpacing.small),
-
                   Align(
                     alignment: Alignment.centerRight,
                     child: LoginForgotPassword(onPressed: _recuperarContrasena),
                   ),
-
                   const SizedBox(height: AppSpacing.large),
-
                   LoginButton(onPressed: _iniciarSesion, isLoading: _isLoading),
-
                   const SizedBox(height: AppSpacing.large),
-
                   LoginRegister(onPressed: _registrarse),
-
                   const SizedBox(height: AppSpacing.large),
-
                   LoginGoogleButton(onPressed: _iniciarConGoogle),
-
                   const SizedBox(height: AppSpacing.huge),
-
                   const LoginFooter(),
                 ],
               ),

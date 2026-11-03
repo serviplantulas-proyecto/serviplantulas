@@ -1,12 +1,6 @@
 import express from "express";
 
-import {
-    listarPedidos,
-    obtenerPedido,
-    crear,
-    editar,
-    eliminar
-} from "../controllers/pedidos-controller.js";
+import {listarPedidos, obtenerPedido, crear, editar, eliminar, enviarFacturaCorreo} from "../controllers/pedidos-controller.js";
 
 import { verificarToken } from "../middlewares/middlewares.js";
 
@@ -91,6 +85,29 @@ router.put("/:id", verificarToken, editar);
 // Authorization: Bearer Token
 
 router.delete("/:id", verificarToken, eliminar);
+
+router.post("/enviar-factura", verificarToken, enviarFacturaCorreo);
+
+// Body JSON:
+// {
+//   "email": "opcional@si-no-se-envia-usa-el-del-token",
+//   "nombre": "opcional",
+//   "factura": {
+//     "id": "12",
+//     "cliente": "...",
+//     "documento": "...",
+//     "fecha": "02 Nov 2026 · 14:35",
+//     "metodoPago": "Efectivo",
+//     "estado": "Pagada",
+//     "unidades": 3,
+//     "total": 45000,
+//     "descuentoPct": 0,
+//     "ivaPct": 19,
+//     "lineas": [
+//       { "nombre": "Helecho", "cantidad": 2, "unitario": 15000 }
+//     ]
+//   }
+// }
 
 export default router;
 

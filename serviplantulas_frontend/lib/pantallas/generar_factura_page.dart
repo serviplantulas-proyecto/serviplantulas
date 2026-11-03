@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../componentes/ventas/factura_list_card.dart';
 import '../componentes/ventas/factura_resumen_body.dart';
+import '../services/facturas_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
@@ -17,6 +19,7 @@ class GenerarFacturaPage extends StatefulWidget {
 }
 
 class _GenerarFacturaPageState extends State<GenerarFacturaPage> {
+  final _service = FacturasService();
   bool _isLoading = false;
 
   FacturaListItem get _f =>
@@ -30,6 +33,45 @@ class _GenerarFacturaPageState extends State<GenerarFacturaPage> {
         estado: 'Pendiente',
         lineas: [],
       );
+
+  Future<void> _enviar() async {
+    if (_f.id == '0') {
+      _snack('No hay factura para enviar', error: true);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('user_email') ?? '';
+      final nombre = [
+        prefs.getString('user_nombre') ?? '',
+        prefs.getString('user_apellido') ?? '',
+      ].where((s) => s.trim().isNotEmpty).join(' ');
+
+      final res = await _service.enviarPorCorreo(
+        factura: _f,
+        email: email.isEmpty ? null : email,
+        nombre: nombre.isEmpty ? null : nombre,
+      );
+      if (!mounted) return;
+      _snack('Enviado a ${res['email'] ?? email}');
+    } on FacturasException catch (e) {
+      if (mounted) _snack(e.message, error: true);
+    } catch (_) {
+      if (mounted) {
+        _snack('No se pudo enviar el correo', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _snack(String msg, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: error ? AppColors.error : AppColors.success,
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,17 +121,5 @@ class _GenerarFacturaPageState extends State<GenerarFacturaPage> {
         ),
       ),
     );
-  }
-
-  void _enviar() {
-    setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Envío por correo pendiente de API'),
-        backgroundColor: AppColors.success,
-      ));
-    });
   }
 }

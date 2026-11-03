@@ -59,6 +59,10 @@ class ApiConfig {
   static String get notificacionesLimpiarUrl =>
       '${notificacionesUrl}limpiar-antiguas';
 
+  // ── Facturas ──
+  static String get pedidosEnviarFacturaUrl =>
+      '${pedidosUrl}enviar-factura';
+
   static String get _apiHost {
     if (useRemote) {
       return _remoteUrl;
