@@ -52,8 +52,5 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-//organizar el token de mantener inicio se secion - falta por probar
-//permitir eliminar registro del historial del chatbot - jueves
 //organizar el token de inicio se secion con google  - jueves
-//agregar filtros minimos que debe de tener la contraseña en "registrar cuenta"
 //agregar nombre cientifico en "registrar producto" debajo de nombre del producto
