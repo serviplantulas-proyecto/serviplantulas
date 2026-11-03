@@ -20,6 +20,41 @@ async function resolverSnapshotProveedor(idProveedor, snapshotBody) {
     return (prov?.nombre_proveedor || "").trim() || null;
 }
 
+function normalizarCamposProducto(body = {}) {
+    const datos = {};
+    const enteros = new Set([
+        "stock",
+        "stock_minimo",
+        "id_proveedor",
+        "id_categoria"
+    ]);
+    const decimales = new Set(["precio_producto", "costo_compra"]);
+    const textos = new Set([
+        "nombre_producto",
+        "descripcion_producto",
+        "imagen_url",
+        "nombre_proveedor_snapshot"
+    ]);
+
+    for (const [key, value] of Object.entries(body)) {
+        if (value === undefined || value === null || value === "") continue;
+        if (enteros.has(key)) {
+            const n = parseInt(String(value), 10);
+            if (!Number.isNaN(n)) datos[key] = n;
+            continue;
+        }
+        if (decimales.has(key)) {
+            const n = parseFloat(String(value));
+            if (!Number.isNaN(n)) datos[key] = n;
+            continue;
+        }
+        if (textos.has(key)) {
+            datos[key] = String(value);
+        }
+    }
+    return datos;
+}
+
 export const listarProductos = async (req, res) => {
     try {
         const { data, error } = await obtenerTodos();
@@ -60,16 +95,9 @@ export const obtenerPorCat = async (req, res) => {
 
 export const crear = async (req, res) => {
     try {
-        const {
-            nombre_producto,
-            descripcion_producto,
-            precio_producto,
-            costo_compra,
-            stock,
-            stock_minimo,
-            id_proveedor,
-            id_categoria
-        } = req.body;
+        const body = normalizarCamposProducto(req.body);
+        const nombre_producto = body.nombre_producto ?? req.body.nombre_producto;
+        const precio_producto = body.precio_producto ?? req.body.precio_producto;
 
         if (!nombre_producto || precio_producto === undefined) {
             return res.status(400).json({
@@ -79,19 +107,19 @@ export const crear = async (req, res) => {
 
         const imagen_url = req.file ? req.file.path : null;
         const nombre_proveedor_snapshot = await resolverSnapshotProveedor(
-            id_proveedor,
+            body.id_proveedor,
             req.body.nombre_proveedor_snapshot
         );
 
         const { data, error } = await crearProducto({
             nombre_producto,
-            descripcion_producto,
+            descripcion_producto: body.descripcion_producto,
             precio_producto,
-            costo_compra,
-            stock,
-            stock_minimo,
-            id_proveedor: id_proveedor || null,
-            id_categoria: id_categoria || null,
+            costo_compra: body.costo_compra,
+            stock: body.stock ?? 0,
+            stock_minimo: body.stock_minimo ?? 0,
+            id_proveedor: body.id_proveedor ?? null,
+            id_categoria: body.id_categoria ?? null,
             nombre_proveedor_snapshot,
             imagen_url
         });
@@ -101,9 +129,7 @@ export const crear = async (req, res) => {
             return res.status(500).json({ error: "Error al crear el producto" });
         }
 
-        if (data?.[0]) {
-            await notificarStockBajoSiAplica(data[0]);
-        }
+        if (data?.[0]) await notificarStockBajoSiAplica(data[0]);
 
         return res.status(201).json({
             message: "Producto creado",
@@ -117,17 +143,28 @@ export const crear = async (req, res) => {
 export const editar = async (req, res) => {
     try {
         const { id } = req.params;
-        const datosActualizados = { ...req.body };
+        const datosActualizados = normalizarCamposProducto(req.body);
 
         if (req.file) {
             datosActualizados.imagen_url = req.file.path;
         }
 
-        if (Object.prototype.hasOwnProperty.call(datosActualizados, "id_proveedor")) {
+        if (Object.keys(datosActualizados).length === 0) {
+            return res.status(400).json({
+                error: "No se enviaron campos para actualizar"
+            });
+        }
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                datosActualizados,
+                "id_proveedor"
+            )
+        ) {
             datosActualizados.nombre_proveedor_snapshot =
                 await resolverSnapshotProveedor(
                     datosActualizados.id_proveedor,
-                    datosActualizados.nombre_proveedor_snapshot
+                    req.body.nombre_proveedor_snapshot
                 );
         }
 
@@ -135,18 +172,21 @@ export const editar = async (req, res) => {
 
         if (error) {
             console.error("Error actualizar producto:", error);
-            return res.status(500).json({ error: "Error al actualizar el producto" });
+            return res.status(500).json({
+                error: error.message || "Error al actualizar el producto"
+            });
         }
 
-        // Recargar producto completo para stock + mínimo + nombre
-        const { data: full } = await obtenerPorId(id);
-        if (full) {
-            await notificarStockBajoSiAplica(full);
+        if (!data || data.length === 0) {
+            return res.status(404).json({ error: "Producto no encontrado" });
         }
+
+        const { data: full } = await obtenerPorId(id);
+        if (full) await notificarStockBajoSiAplica(full);
 
         return res.status(200).json({
             message: "Producto actualizado",
-            producto: data?.[0] ?? full
+            producto: data[0]
         });
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -160,7 +200,9 @@ export const eliminar = async (req, res) => {
         if (error) {
             console.error("Error al eliminar el producto:", error);
             return res
-                .status(error.code === "23502" || error.code === "23503" ? 409 : 500)
+                .status(
+                    error.code === "23502" || error.code === "23503" ? 409 : 500
+                )
                 .json({
                     error:
                         error.message ||

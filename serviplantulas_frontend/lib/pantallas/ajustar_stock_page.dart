@@ -6,6 +6,7 @@ import '../componentes/compartidos/form_dropdown.dart';
 import '../componentes/compartidos/qty_stepper.dart';
 import '../componentes/stock/stock_product_banner.dart';
 import '../models/producto.dart';
+import '../services/alertas_prefs_service.dart';
 import '../services/productos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
@@ -66,26 +67,27 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
     if (_tipoAjuste.startsWith('Salida')) {
       return (_producto.stock - _cantidad).clamp(0, 999999);
     }
-    return _cantidad; // ajuste manual = valor absoluto
+    return _cantidad;
   }
 
   Future<void> _confirmar() async {
-    if (_producto.idProducto <= 0) {
-      _snack('Producto inválido', error: true);
-      return;
-    }
+    await _service.actualizarJson(
+        id: _producto.idProducto,
+        campos: {'stock': _nuevoStock},
+      );
 
     setState(() => _isLoading = true);
     try {
-      // El backend actualiza con PUT multipart/campos
-      await _service.actualizar(
+      await _service.actualizarJson(
         id: _producto.idProducto,
-        campos: {
-          'stock': _nuevoStock.toString(),
-        },
+        campos: {'stock': _nuevoStock},
       );
+      try {
+        await AlertasPrefsService()
+            .evaluarProducto(_producto.copyWith(stock: _nuevoStock));
+      } catch (_) {}
       if (!mounted) return;
-      _snack('Stock actualizado a $_nuevoStock Unidades');
+      _snack('Stock actualizado a $_nuevoStock unidades');
       Navigator.pop(context, true);
     } on ProductosException catch (e) {
       if (!mounted) return;

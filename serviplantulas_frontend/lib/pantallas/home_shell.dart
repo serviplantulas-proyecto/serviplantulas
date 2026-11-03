@@ -24,10 +24,8 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
+  final _dashboardKey = GlobalKey<DashboardPageState>();
 
-  // Mapeo de índice de nav a índice de IndexedStack
-  // Nav: 0 Inicio, 1 Inventario, 2 Ventas(push), 3 Clientes, 4 Más
-  // Stack: 0 Dashboard, 1 Inventario, 2 Clientes, 3 Más
   int get _stackIndex {
     if (_currentIndex <= 1) return _currentIndex;
     if (_currentIndex == 3) return 2;
@@ -35,19 +33,30 @@ class _HomeShellState extends State<HomeShell> {
     return 0;
   }
 
+  void _refrescarDashboard() {
+    _dashboardKey.currentState?.recargar();
+  }
+
   void _onNavTap(int index) {
     if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const RegistroVentaPage()),
-      );
+      ).then((_) => _refrescarDashboard());
       return;
     }
     setState(() => _currentIndex = index);
+    if (index == 0) {
+      // Al volver a Inicio, actualizar Resumen de Hoy
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refrescarDashboard();
+      });
+    }
   }
 
-  void _push(Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  Future<void> _push(Widget page) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+    _refrescarDashboard();
   }
 
   @override
@@ -58,6 +67,7 @@ class _HomeShellState extends State<HomeShell> {
         index: _stackIndex,
         children: [
           DashboardPage(
+            key: _dashboardKey,
             onNuevaVenta: () => _push(const RegistroVentaPage()),
             onVerInventario: () => setState(() => _currentIndex = 1),
             onChatBot: () => _push(const ChatEvaPage()),

@@ -27,10 +27,7 @@ class ProductosService {
   // PRODUCTOS
   // ═══════════════════════════════════════
 
-  Future<List<Producto>> listar({
-    String? busqueda,
-    int? idCategoria,
-  }) async {
+  Future<List<Producto>> listar({String? busqueda, int? idCategoria}) async {
     final uri = idCategoria != null
         ? Uri.parse(ApiConfig.productosByCategoriaUrl(idCategoria))
         : Uri.parse(ApiConfig.productosUrl);
@@ -41,10 +38,12 @@ class ProductosService {
     if (busqueda != null && busqueda.trim().isNotEmpty) {
       final q = busqueda.toLowerCase();
       lista = lista
-          .where((p) =>
-              p.nombreProducto.toLowerCase().contains(q) ||
-              (p.descripcionProducto?.toLowerCase().contains(q) ?? false) ||
-              p.id.contains(q))
+          .where(
+            (p) =>
+                p.nombreProducto.toLowerCase().contains(q) ||
+                (p.descripcionProducto?.toLowerCase().contains(q) ?? false) ||
+                p.id.contains(q),
+          )
           .toList();
     }
     return lista;
@@ -121,6 +120,39 @@ class ProductosService {
     return _enviarMultipart(request, 'No se pudo actualizar el producto.');
   }
 
+  Future<Producto> actualizarJson({
+    required int id,
+    required Map<String, dynamic> campos,
+  }) async {
+    final token = await _token();
+    try {
+      final response = await http
+          .put(
+            Uri.parse(ApiConfig.productoByIdUrl(id)),
+            headers: ApiConfig.authHeaders(token),
+            body: jsonEncode(campos),
+          )
+          .timeout(const Duration(seconds: 20));
+      final decoded = _decodeBody(response);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ProductosException(
+          _errorMsg(decoded, 'No se pudo actualizar el producto.'),
+        );
+      }
+      final productoJson = decoded is Map && decoded['producto'] is Map
+          ? Map<String, dynamic>.from(decoded['producto'] as Map)
+          : (decoded is Map<String, dynamic> ? decoded : null);
+      if (productoJson == null) {
+        throw const ProductosException('El servidor no devolvió el producto.');
+      }
+      return Producto.fromJson(productoJson);
+    } on SocketException {
+      throw const ProductosException('No se pudo conectar con el servidor.');
+    } on TimeoutException {
+      throw const ProductosException('El servidor tardó demasiado.');
+    }
+  }
+
   Future<void> eliminar(int id) async {
     final token = await _token();
     final response = await http
@@ -182,8 +214,9 @@ class ProductosService {
     String fallbackError,
   ) async {
     try {
-      final streamed =
-          await request.send().timeout(const Duration(seconds: 45));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 45),
+      );
       final response = await http.Response.fromStream(streamed);
       final decoded = _decodeBody(response);
 
@@ -196,15 +229,11 @@ class ProductosService {
           : (decoded is Map<String, dynamic> ? decoded : null);
 
       if (productoJson == null) {
-        throw const ProductosException(
-          'El servidor no devolvió el producto.',
-        );
+        throw const ProductosException('El servidor no devolvió el producto.');
       }
       return Producto.fromJson(productoJson);
     } on SocketException {
-      throw const ProductosException(
-        'No se pudo conectar con el servidor.',
-      );
+      throw const ProductosException('No se pudo conectar con el servidor.');
     } on TimeoutException {
       throw const ProductosException(
         'El servidor tardó demasiado en responder.',
@@ -237,9 +266,7 @@ class ProductosService {
         'El servidor tardó demasiado en responder.',
       );
     } on http.ClientException {
-      throw const ProductosException(
-        'No se pudo conectar con el servidor.',
-      );
+      throw const ProductosException('No se pudo conectar con el servidor.');
     }
   }
 

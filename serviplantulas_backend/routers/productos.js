@@ -83,9 +83,16 @@ router.put(
     "/productos/:id",
     verificarToken,
     verificarAdmin,
-    upload.single("imagen"),
+    (req, res, next) => {
+        const ct = req.headers["content-type"] || "";
+        if (ct.includes("multipart/form-data")) {
+            return upload.single("imagen")(req, res, next);
+        }
+        return next();
+    },
     editar
 );
+
 
 
 // DELETE - Eliminar producto

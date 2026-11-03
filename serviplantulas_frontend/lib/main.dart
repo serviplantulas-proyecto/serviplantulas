@@ -52,7 +52,6 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-//organizar que al hacer una venta el stock del inventario baje y en el dashboard tambien - miercoles
 //organizar el token de mantener inicio se secion - miercoles
 //organizar el boton de enviar por correo en "resumen de venta"  - miercoles
 //permitir eliminar registro del historial del chatbot - jueves

@@ -33,10 +33,10 @@ class DashboardPage extends StatefulWidget {
   });
 
   @override
-  State<DashboardPage> createState() => _DashboardPageState();
+  State<DashboardPage> createState() => DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class DashboardPageState extends State<DashboardPage> {
   final _service = DashboardService();
   DashboardStats? _stats;
   bool _loading = true;
@@ -44,19 +44,20 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _cargar();
+    recargar();
   }
 
-  Future<void> _cargar() async {
+  /// Público: HomeShell / otras pantallas pueden forzar actualización.
+  Future<void> recargar() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final data = await _service.obtenerResumen();
-      if (mounted) {
-        setState(() {
-          _stats = data;
-          _loading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _stats = data;
+        _loading = false;
+      });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
@@ -77,7 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
       context,
       MaterialPageRoute(builder: (_) => const MiCuentaPage()),
     );
-    _cargar();
+    recargar();
   }
 
   Future<void> _irNotificaciones() async {
@@ -85,7 +86,7 @@ class _DashboardPageState extends State<DashboardPage> {
       context,
       MaterialPageRoute(builder: (_) => const NotificacionesPage()),
     );
-    if (mounted) _cargar();
+    if (mounted) recargar();
   }
 
   @override
@@ -94,10 +95,10 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
-        child: _loading
+        child: _loading && _stats == null
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
-                onRefresh: _cargar,
+                onRefresh: recargar,
                 color: AppColors.primary,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
