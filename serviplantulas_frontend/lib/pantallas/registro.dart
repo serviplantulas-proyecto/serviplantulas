@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
+import '../componentes/compartidos/password_rules.dart';
 import 'verificar_cuenta.dart';
 import '../services/auth_service.dart';
 import '../componentes/registro/registro_header.dart';
@@ -45,17 +45,17 @@ class _RegistroPageState extends State<RegistroPage> {
     final digitosTelefono = telefono.replaceAll(RegExp(r'\D'), '').length;
     final contrasena = _passwordController.text;
 
+    
+
     String? error;
     if (nombreCompleto.isEmpty || partesNombre.length < 2) {
       error = 'Ingresa tu nombre y apellido.';
     } else if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       error = 'Ingresa un correo electrónico válido.';
-    } else if (digitosTelefono < 7 || digitosTelefono > 15) {
-      error = 'Ingresa un número de contacto válido.';
     } else if (digitosTelefono != 10) {
       error = 'El número de contacto debe tener 10 dígitos.';
-    } else if (contrasena.length < 8) {
-      error = 'La contraseña debe tener al menos 8 caracteres.';
+    } else if (!PasswordRuleResult.evaluate(contrasena).isValid) {
+      error = 'La contraseña no cumple todos los requisitos de seguridad.';
     } else if (contrasena != _confirmPasswordController.text) {
       error = 'Las contraseñas no coinciden.';
     }

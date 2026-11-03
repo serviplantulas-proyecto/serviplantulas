@@ -8,6 +8,7 @@ import '../componentes/recuperar_contrasena/recuperar_resend.dart';
 import '../services/auth_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
+import '../componentes/compartidos/password_rules.dart';
 
 class VerificarCodigoRecuperacionPage extends StatefulWidget {
   final String email;
@@ -151,14 +152,16 @@ class _VerificarCodigoRecuperacionPageState
                 const SizedBox(height: 24),
                 RecuperarPasswordField(
                   label: 'Nueva Contraseña',
-                  hintText: 'Min. 8 caracteres',
+                  hintText: 'Crea una contraseña',
                   controller: _newPasswordController,
+                  showRules: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Ingresa la nueva contraseña';
                     }
-                    if (value.length < 8) {
-                      return 'Debe tener al menos 8 caracteres';
+                    final rules = PasswordRuleResult.evaluate(value);
+                    if (!rules.isValid) {
+                      return 'Cumple todos los requisitos de seguridad';
                     }
                     return null;
                   },
