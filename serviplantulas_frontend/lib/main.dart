@@ -52,5 +52,5 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-//organizar el token de inicio se secion con google  - jueves
 //agregar nombre cientifico en "registrar producto" debajo de nombre del producto
+//organizar el token de inicio se secion con google  - jueves
