@@ -224,4 +224,60 @@ class AuthService {
       );
     }
   }
+
+    static Future<void> iniciarSesionGoogle({required String idToken}) async {
+    final decoded = await _postAuth(
+      url: ApiConfig.googleAuthUrl,
+      body: {'idToken': idToken},
+      fallbackMessage: 'No fue posible iniciar sesión con Google.',
+    );
+
+    final token = decoded['token'];
+    if (token is! String || token.isEmpty) {
+      throw const AuthException(
+        'El servidor no devolvió un token de sesión válido.',
+      );
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString('auth_token', token);
+
+    final u = decoded['usuario'];
+    if (u is Map) {
+      await preferences.setString(
+        'user_email',
+        (u['email'] ?? '').toString(),
+      );
+      await preferences.setString(
+        'user_nombre',
+        (u['nombre'] ?? '').toString(),
+      );
+      await preferences.setString(
+        'user_apellido',
+        (u['apellido'] ?? '').toString(),
+      );
+      await preferences.setString(
+        'user_rol',
+        (u['rol'] ?? 'usuario').toString(),
+      );
+      if (u['telefono'] != null) {
+        await preferences.setString(
+          'user_telefono',
+          u['telefono'].toString(),
+        );
+      }
+      if (u['id'] != null) {
+        await preferences.setInt(
+          'user_id',
+          int.tryParse(u['id'].toString()) ?? 0,
+        );
+      }
+      if (u['avatar'] != null) {
+        await preferences.setString(
+          'user_avatar',
+          u['avatar'].toString(),
+        );
+      }
+    }
+  }
 }

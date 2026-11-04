@@ -9,6 +9,8 @@ import {
 
 import { forgotPassword, verifyCode, verifyProfileChange } from "../controllers/recuperar-controller.js";
 
+import { autenticarConGoogle } from "../controllers/googleauth-controller.js";
+
 const router = express.Router();
 
 // POST - Registrar usuario y enviar código de verificación
@@ -83,6 +85,10 @@ router.post("/verify-code", verifyCode);
 // Body: { "email": "actual@...", "codigo": "123456", "nuevo_email": "...", "nuevo_telefono": "..." }
 // Paso 1: POST /auth/forgot-password con el correo actual (envía código)
 router.post("/verify-profile-change", verifyProfileChange);
+
+// POST /auth/google
+// Body: { "idToken": "..." }
+router.post("/google", autenticarConGoogle);
 
 
 export default router;

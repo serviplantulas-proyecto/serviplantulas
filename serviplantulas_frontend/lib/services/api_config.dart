@@ -18,6 +18,12 @@ class ApiConfig {
   static String get verifyRecoveryCodeUrl => '${_apiHost}auth/verify-code';
   static String get verifyProfileChangeUrl =>
       '${_apiHost}auth/verify-profile-change';
+  static String get googleAuthUrl => '${_apiHost}auth/google';
+
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: 'PON_AQUI_TU_CLIENT_ID.apps.googleusercontent.com',
+  );
 
   // ── Chat ──
   static String get chatbotUrl => '${_apiHost}chatbot/';
@@ -60,8 +66,7 @@ class ApiConfig {
       '${notificacionesUrl}limpiar-antiguas';
 
   // ── Facturas ──
-  static String get pedidosEnviarFacturaUrl =>
-      '${pedidosUrl}enviar-factura';
+  static String get pedidosEnviarFacturaUrl => '${pedidosUrl}enviar-factura';
 
   static String get _apiHost {
     if (useRemote) {

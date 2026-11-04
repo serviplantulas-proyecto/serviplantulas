@@ -1,4 +1,5 @@
 import { supabase } from "../config/supabase.js";
+import bcrypt from "bcrypt";
 
 // Crear usuario
 export const crearUsuario = async (
@@ -123,3 +124,38 @@ export const verificarUsuario = async (id) => {
 
     return { data, error };
 };
+
+//crear usuario google
+    export const crearUsuarioGoogle = async ({
+        nombre_usuarios,
+        apellido_usuarios,
+        email_usuarios,
+        googleId,
+        avatar,
+        rol_usuarios = "usuario"
+    }) => {
+        const hashPlaceholder = await bcrypt.hash(
+            `google_${googleId}_${Date.now()}`,
+            10
+        );
+    
+        const { data, error } = await supabase
+            .from("usuarios")
+            .insert({
+                nombre_usuarios,
+                apellido_usuarios: apellido_usuarios || "",
+                telefono_usuarios: null,
+                email_usuarios,
+                contrasena_usuarios: hashPlaceholder,
+                googleId,
+                avatar,
+                rol_usuarios,
+                isVerified: true,
+                codigoVerificacion: null,
+                codigoVerificacionExpiracion: null
+            })
+            .select()
+            .single();
+    
+        return { data, error };
+    };
