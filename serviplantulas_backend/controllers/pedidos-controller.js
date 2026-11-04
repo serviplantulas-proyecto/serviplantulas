@@ -1,5 +1,13 @@
 import { enviarResumenFactura } from "../services/email-service.js";
 import { obtenerPorId as obtenerClientePorId } from "../models/clientes-model.js";
+import {
+    obtenerTodos,
+    obtenerPorId,
+    crearPedido,
+    actualizarPedido,
+    eliminarPedido
+} from "../models/pedidos-model.js";
+import { obtenerPorId as obtenerUsuarioPorId } from "../models/usuarios-model.js";
 
 export const listarPedidos = async (req, res) => {
     try {
