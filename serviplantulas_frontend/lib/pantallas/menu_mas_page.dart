@@ -56,7 +56,6 @@ class MenuMasPage extends StatelessWidget {
                     icon: Icons.notifications_outlined,
                     title: 'Notificaciones',
                     subtitle: 'Observa todas las notificaciones que has recibido ',
-                    iconBg: AppColors.infoBackground,
                     onTap: () => _go(context, const NotificacionesPage()),
                   ),
                   MenuOptionTile(
@@ -75,7 +74,6 @@ class MenuMasPage extends StatelessWidget {
                     icon: Icons.smart_toy_outlined,
                     title: 'Chat Bot',
                     subtitle: 'Accede a la IA de ServiPlantulas',
-                    iconBg: AppColors.infoBackground,
                     onTap: () => _go(context, const ChatEvaPage()),
                   ),
                 ],

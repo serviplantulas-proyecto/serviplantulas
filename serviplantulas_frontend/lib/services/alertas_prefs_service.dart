@@ -3,8 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/producto.dart';
 import 'notificaciones_service.dart';
 import 'productos_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AlertasPrefsService {
+  static const _kNotificaciones = 'Activar_notificaciones';
   static const _kStock = 'alerta_stock_bajo';
   static const _kVenta = 'alerta_venta_registrada';
   static const _kCliente = 'alerta_nuevo_cliente';
@@ -15,6 +17,7 @@ class AlertasPrefsService {
   Future<Map<String, dynamic>> cargar() async {
     final p = await SharedPreferences.getInstance();
     return {
+      'notificaciones': p.getBool(_kNotificaciones) ?? true,
       'stock': p.getBool(_kStock) ?? true,
       'venta': p.getBool(_kVenta) ?? true,
       'cliente': p.getBool(_kCliente) ?? false,
@@ -24,8 +27,10 @@ class AlertasPrefsService {
     };
   }
 
+
   Future<void> guardar(Map<String, dynamic> flags) async {
     final p = await SharedPreferences.getInstance();
+    await p.setBool(_kNotificaciones, flags['notificacion'] == true);
     await p.setBool(_kStock, flags['stock'] == true);
     await p.setBool(_kVenta, flags['venta'] == true);
     await p.setBool(_kCliente, flags['cliente'] == true);
@@ -62,6 +67,22 @@ class AlertasPrefsService {
     return msg;
   }
 
+  Future<void> solicitarPermisoNotificaciones() async {
+  PermissionStatus status = await Permission.notification.request();
+
+  if (status.isGranted) {
+    // El usuario concedió el permiso
+    print("Permiso concedido");
+  } else if (status.isDenied) {
+    // El usuario denegó el permiso
+    print("Permiso denegado");
+  } else if (status.isPermanentlyDenied) {
+    // El usuario denegó el permiso permanentemente
+    // Puedes abrir la configuración de la app
+    await openAppSettings();
+  }
+}
+ 
   /// stock <= stock_minimo (incluye el límite exacto).
   Future<int> sincronizarStockBajo() async {
     if (!await stockActivo()) return 0;
