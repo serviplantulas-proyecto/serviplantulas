@@ -110,13 +110,6 @@ class _ConfigurarAlertasPageState extends State<ConfigurarAlertasPage> {
                           child: Column(
                             children: [
                               AlertaSwitchRow(
-                                title: 'Activar o Desactivar notificaciones',
-                                subtitle:
-                                    'Permite activar o deshactivar las notificaciones.',
-                                value: _kNotificaciones,
-                                onChanged: (v) => setState(() => _kNotificaciones = v),
-                              ),
-                              AlertaSwitchRow(
                                 title: 'Stock Bajo',
                                 subtitle:
                                     'Avisar cuando un producto esté por debajo del límite.',

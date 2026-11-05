@@ -52,4 +52,4 @@ class MainApp extends StatelessWidget {
 
 //cosas para modificar:
 
-//agregar nombre cientifico en "registrar producto" debajo de nombre del producto
+//solucionar error al editar producto, permitir realizar la compra incluso si esta por debajo del stock minimo(se realiza pero no se actualiza el stock), permitir editar un producto incluso si esta por debajo del stock minimo o es igual al stock minimo(dale error)

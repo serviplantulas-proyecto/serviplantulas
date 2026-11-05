@@ -122,13 +122,6 @@ class _AgregarClientePageState extends State<AgregarClientePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const ClienteFormLabel('Nombre Completo'),
-                    ClienteFormField(
-                      controller: _nombreCtrl,
-                      hint: 'Ej. Juan Carlos Pérez',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: AppSpacing.large),
                     const ClienteFormLabel('Documento de Identidad'),
                     ClienteTipoDocToggle(
                       esCedula: _esCedula,
@@ -139,6 +132,13 @@ class _AgregarClientePageState extends State<AgregarClientePage> {
                       controller: _docCtrl,
                       hint: 'Número de documento (sin puntos)',
                       keyboard: TextInputType.number,
+                    ),
+                    const SizedBox(height: AppSpacing.large),
+                    const ClienteFormLabel('Nombre Completo'),
+                    ClienteFormField(
+                      controller: _nombreCtrl,
+                      hint: 'Ej. Juan Carlos Pérez',
+                      icon: Icons.person_outline,
                     ),
                     const SizedBox(height: AppSpacing.large),
                     const ClienteFormLabel('Teléfono Móvil'),
