@@ -1,9 +1,9 @@
 import { crearNotificacion, obtenerNoLeidas } from "../models/notificaciones-model.js";
-import { actualizarProducto } from "../models/productos-model.js";
+import { actualizarProducto, obtenerPorId } from "../models/productos-model.js";
 
 /**
- * Si stock <= stock_minimo (>0), crea notificación poco_stock
- * (evita duplicado no leído del mismo producto).
+ * stock_minimo es solo umbral de ALERTA, no un piso de inventario.
+ * El stock puede bajar a 0.
  */
 export async function notificarStockBajoSiAplica(producto) {
     if (!producto) return;
@@ -30,14 +30,58 @@ export async function notificarStockBajoSiAplica(producto) {
     });
 }
 
-/** Resta stock y notifica si aplica. */
+/**
+ * Resta stock real (hasta 0). No usa stock_minimo como piso.
+ * Propaga error de Supabase para no dejar la venta sin descontar.
+ */
 export async function descontarStockYAlertar(producto, cantidad) {
-    const nuevo = Math.max(0, (Number(producto.stock) || 0) - Number(cantidad));
+    const actual = Number(producto.stock) || 0;
+    const cant = Number(cantidad) || 0;
+    if (cant <= 0) {
+        return { error: new Error("Cantidad inválida") };
+    }
+    if (actual < cant) {
+        return {
+            error: new Error(
+                `Stock insuficiente. Disponible: ${actual}`
+            )
+        };
+    }
+
+    // Solo piso en 0: el mínimo NO bloquea la venta
+    const nuevo = actual - cant;
+
     const { data, error } = await actualizarProducto(producto.id_producto, {
         stock: nuevo
     });
-    if (error) return { error };
-    const actualizado = data?.[0] || { ...producto, stock: nuevo };
+
+    if (error) {
+        console.error("Error actualizar stock:", error);
+        return { error };
+    }
+
+    // Preferir fila devuelta; si no, reconsultar
+    let actualizado = data?.[0];
+    if (!actualizado) {
+        const { data: full } = await obtenerPorId(producto.id_producto);
+        actualizado = full || { ...producto, stock: nuevo };
+    }
+
+    // Si por algún motivo el stock no bajó, fallar explícito
+    if (Number(actualizado.stock) !== nuevo) {
+        console.error(
+            "Stock no actualizado en BD. esperado=",
+            nuevo,
+            "obtuvo=",
+            actualizado.stock
+        );
+        return {
+            error: new Error(
+                "No se pudo actualizar el stock en la base de datos (posible restricción stock >= stock_minimo)."
+            )
+        };
+    }
+
     await notificarStockBajoSiAplica(actualizado);
     return { data: actualizado, error: null };
 }

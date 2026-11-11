@@ -1,5 +1,15 @@
-import {obtenerTodos, obtenerPorId, obtenerPorPedido, crearDetalle, actualizarDetalle, eliminarDetalle} from "../models/detalle-pedidos-model.js";
-import { obtenerPorId as obtenerProductoPorId } from "../models/productos-model.js";
+import {
+    obtenerTodos,
+    obtenerPorId,
+    obtenerPorPedido,
+    crearDetalle,
+    actualizarDetalle,
+    eliminarDetalle
+} from "../models/detalle-pedidos-model.js";
+import {
+    obtenerPorId as obtenerProductoPorId,
+    actualizarProducto
+} from "../models/productos-model.js";
 import { descontarStockYAlertar } from "./stock_alerta_helper.js";
 
 export const listarDetalles = async (req, res) => {
@@ -98,6 +108,20 @@ export const crear = async (req, res) => {
             });
         }
 
+        // Descontar ANTES (stock_minimo no es piso)
+        const { error: stockError } = await descontarStockYAlertar(
+            producto,
+            cantidad
+        );
+        if (stockError) {
+            console.error("Error descontar stock:", stockError);
+            return res.status(400).json({
+                error:
+                    stockError.message ||
+                    "No se pudo descontar el stock. Revisa restricciones en la base de datos."
+            });
+        }
+
         const { data, error } = await crearDetalle({
             id_pedido,
             id_producto,
@@ -108,18 +132,12 @@ export const crear = async (req, res) => {
 
         if (error) {
             console.error("Error crear detalle:", error);
+            await actualizarProducto(producto.id_producto, {
+                stock: producto.stock
+            }).catch(() => {});
             return res.status(500).json({
                 error: "Error al agregar el producto al pedido"
             });
-        }
-
-        // Descontar stock + alerta si llega al mínimo
-        const { error: stockError } = await descontarStockYAlertar(
-            producto,
-            cantidad
-        );
-        if (stockError) {
-            console.error("Error descontar stock:", stockError);
         }
 
         return res.status(201).json({
