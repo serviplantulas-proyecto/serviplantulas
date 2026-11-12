@@ -10,6 +10,7 @@ import '../styles/app_text_styles.dart';
 import 'chat_eva_page.dart';
 import 'configurar_alertas_page.dart';
 import 'historial_facturas_page.dart';
+import 'manual_usuario_page.dart';
 import 'mi_cuenta_page.dart';
 
 class MenuMasPage extends StatelessWidget {
@@ -37,14 +38,15 @@ class MenuMasPage extends StatelessWidget {
                   MenuOptionTile(
                     icon: Icons.category_outlined,
                     title: 'Directorio Categorías',
-                    subtitle: 'Ver todas las categorás del catágolo',
+                    subtitle: 'Ver todas las categorías del catálogo',
                     onTap: () => _go(context, const CategoriasPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.local_shipping_outlined,
                     title: 'Directorio Proveedores',
                     subtitle: 'Ver contactos de abastecimiento',
-                    onTap: () => _go(context, const DirectorioProveedoresPage()),
+                    onTap: () =>
+                        _go(context, const DirectorioProveedoresPage()),
                   ),
                   MenuOptionTile(
                     icon: Icons.notifications_outlined,
@@ -55,7 +57,7 @@ class MenuMasPage extends StatelessWidget {
                   MenuOptionTile(
                     icon: Icons.notifications_outlined,
                     title: 'Notificaciones',
-                    subtitle: 'Observa todas las notificaciones que has recibido ',
+                    subtitle: 'Observa todas las notificaciones que has recibido',
                     onTap: () => _go(context, const NotificacionesPage()),
                   ),
                   MenuOptionTile(
@@ -66,8 +68,8 @@ class MenuMasPage extends StatelessWidget {
                   ),
                   MenuOptionTile(
                     icon: Icons.bar_chart,
-                    title: 'Analisis de Ventas',
-                    subtitle: 'Accede al analisis de las ventas ',
+                    title: 'Análisis de Ventas',
+                    subtitle: 'Accede al análisis de las ventas',
                     onTap: () => _go(context, const AnalisisVentasPage()),
                   ),
                   MenuOptionTile(
@@ -75,6 +77,12 @@ class MenuMasPage extends StatelessWidget {
                     title: 'Chat Bot',
                     subtitle: 'Accede a la IA de ServiPlantulas',
                     onTap: () => _go(context, const ChatEvaPage()),
+                  ),
+                  MenuOptionTile(
+                    icon: Icons.menu_book_outlined,
+                    title: 'Manual de Usuario',
+                    subtitle: 'Guía de uso de Serviplantulas (PDF)',
+                    onTap: () => _go(context, const ManualUsuarioPage()),
                   ),
                 ],
               ),
