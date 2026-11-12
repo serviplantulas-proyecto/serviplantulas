@@ -1,12 +1,11 @@
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/producto.dart';
 import 'notificaciones_service.dart';
 import 'productos_service.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class AlertasPrefsService {
-  static const _kNotificaciones = 'Activar_notificaciones';
   static const _kStock = 'alerta_stock_bajo';
   static const _kVenta = 'alerta_venta_registrada';
   static const _kCliente = 'alerta_nuevo_cliente';
@@ -17,7 +16,6 @@ class AlertasPrefsService {
   Future<Map<String, dynamic>> cargar() async {
     final p = await SharedPreferences.getInstance();
     return {
-      'notificaciones': p.getBool(_kNotificaciones) ?? true,
       'stock': p.getBool(_kStock) ?? true,
       'venta': p.getBool(_kVenta) ?? true,
       'cliente': p.getBool(_kCliente) ?? false,
@@ -27,10 +25,8 @@ class AlertasPrefsService {
     };
   }
 
-
   Future<void> guardar(Map<String, dynamic> flags) async {
     final p = await SharedPreferences.getInstance();
-    await p.setBool(_kNotificaciones, flags['notificacion'] == true);
     await p.setBool(_kStock, flags['stock'] == true);
     await p.setBool(_kVenta, flags['venta'] == true);
     await p.setBool(_kCliente, flags['cliente'] == true);
@@ -45,16 +41,15 @@ class AlertasPrefsService {
     return p.getInt(_kRetencionDias) ?? 30;
   }
 
-  Future<bool> stockActivo() async {
-    final f = await cargar();
-    return f['stock'] == true;
+  Future<bool> _flag(String key, {bool def = true}) async {
+    final p = await SharedPreferences.getInstance();
+    return p.getBool(key) ?? def;
   }
 
   Future<String> guardarYAplicar(Map<String, dynamic> flags) async {
     await guardar(flags);
-    final dias = flags['retencionDias'] is int
-        ? flags['retencionDias'] as int
-        : 30;
+    final dias =
+        flags['retencionDias'] is int ? flags['retencionDias'] as int : 30;
     var msg = 'Configuración guardada';
     try {
       final n = await NotificacionesService().limpiarAntiguas(dias);
@@ -68,69 +63,104 @@ class AlertasPrefsService {
   }
 
   Future<void> solicitarPermisoNotificaciones() async {
-  PermissionStatus status = await Permission.notification.request();
-
-  if (status.isGranted) {
-    // El usuario concedió el permiso
-    print("Permiso concedido");
-  } else if (status.isDenied) {
-    // El usuario denegó el permiso
-    print("Permiso denegado");
-  } else if (status.isPermanentlyDenied) {
-    // El usuario denegó el permiso permanentemente
-    // Puedes abrir la configuración de la app
-    await openAppSettings();
+    final status = await Permission.notification.request();
+    if (status.isPermanentlyDenied) await openAppSettings();
   }
-}
- 
-  /// stock <= stock_minimo (incluye el límite exacto).
+
+  /// Stock bajo + sin existencias (respeta preferencia stock).
   Future<int> sincronizarStockBajo() async {
-    if (!await stockActivo()) return 0;
+    if (!await _flag(_kStock)) return 0;
     final productos = await ProductosService().listar();
     final notifs = NotificacionesService();
     final existentes = await notifs.listar();
     var creadas = 0;
     for (final prod in productos) {
-      if (!_debeAlertar(prod)) continue;
-      if (_yaExiste(existentes, prod)) continue;
-      await _crear(notifs, prod);
-      creadas++;
+      final r = await _crearStockSiAplica(notifs, existentes, prod);
+      if (r) {
+        creadas++;
+        existentes.add(NotificacionItem(
+          id: 0,
+          titulo: '',
+          mensaje: prod.nombre,
+          tipo: prod.stock == 0 ? 'sin_stock' : 'poco_stock',
+          leida: false,
+        ));
+      }
     }
     return creadas;
   }
 
-  /// Llamar tras ajustar stock o editar producto (respeta preferencia).
   Future<void> evaluarProducto(Producto prod) async {
-    if (!await stockActivo()) return;
-    if (!_debeAlertar(prod)) return;
+    if (!await _flag(_kStock)) return;
     final notifs = NotificacionesService();
     final existentes = await notifs.listar();
-    if (_yaExiste(existentes, prod)) return;
-    await _crear(notifs, prod);
+    await _crearStockSiAplica(notifs, existentes, prod);
   }
 
-  bool _debeAlertar(Producto prod) {
+  Future<bool> _crearStockSiAplica(
+    NotificacionesService notifs,
+    List existentes,
+    Producto prod,
+  ) async {
+    if (prod.stock == 0) {
+      if (_yaTipo(existentes, 'sin_stock', prod)) return false;
+      await notifs.crear(
+        titulo: 'Sin existencias',
+        mensaje:
+            'El producto ${prod.nombre} se quedó sin existencias (0 unidades).',
+        tipo: 'sin_stock',
+        idProducto: prod.idProducto,
+      );
+      return true;
+    }
     final min = prod.stockMinimo;
-    if (min <= 0) return false;
-    return prod.stock <= min;
+    if (min <= 0 || prod.stock > min) return false;
+    if (_yaTipo(existentes, 'poco_stock', prod)) return false;
+    await notifs.crear(
+      titulo: 'Alerta de Stock Crítico',
+      mensaje:
+          'El stock de ${prod.nombre} ha bajado a ${prod.stock} unidades '
+          '(Mínimo requerido: $min).',
+      tipo: 'poco_stock',
+      idProducto: prod.idProducto,
+    );
+    return true;
   }
 
-  bool _yaExiste(List existentes, Producto prod) {
+  bool _yaTipo(List existentes, String tipo, Producto prod) {
     return existentes.any((n) =>
-        n.tipo == 'poco_stock' &&
+        n.tipo == tipo &&
         !n.leida &&
         (n.mensaje.contains(prod.nombre) ||
             n.mensaje.contains(prod.nombreProducto)));
   }
 
-  Future<void> _crear(NotificacionesService notifs, Producto prod) async {
-    await notifs.crear(
-      titulo: 'Alerta de Stock Crítico',
-      mensaje:
-          'El stock de ${prod.nombre} ha bajado a ${prod.stock} unidades '
-          '(Mínimo requerido: ${prod.stockMinimo}).',
-      tipo: 'poco_stock',
-      idProducto: prod.idProducto,
-    );
+  /// Alerta "Venta registrada" (si está activa en preferencias).
+  Future<void> notificarVenta({
+    required String cliente,
+    required double total,
+    required int idPedido,
+  }) async {
+    if (!await _flag(_kVenta)) return;
+    try {
+      final t = total.toStringAsFixed(0);
+      await NotificacionesService().crear(
+        titulo: 'Venta registrada',
+        mensaje: 'Pedido #$idPedido · $cliente · $t COP',
+        tipo: 'venta_registrada',
+      );
+    } catch (_) {}
+  }
+
+  /// Alerta "Nuevo cliente".
+  Future<void> notificarNuevoCliente(String nombre) async {
+    if (!await _flag(_kCliente, def: false)) return;
+    try {
+      await NotificacionesService().crear(
+        titulo: 'Nuevo cliente',
+        mensaje: 'Se agregó al directorio: $nombre',
+        tipo: 'nuevo_cliente',
+      );
+    } catch (_) {}
   }
 }

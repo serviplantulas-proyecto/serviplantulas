@@ -1,13 +1,16 @@
-import '../componentes/ventas/factura_list_card.dart';
-import 'clientes_service.dart';
-import 'pedidos_service.dart';
-import 'productos_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../componentes/ventas/factura_list_card.dart';
 import 'api_config.dart';
+import 'clientes_service.dart';
+import 'pedidos_service.dart';
+import 'productos_service.dart';
+
 class FacturasException implements Exception {
   final String message;
   const FacturasException(this.message);
@@ -47,6 +50,8 @@ class FacturasService {
           : (cliente?.nombre ??
               (idCliente == null ? 'Cliente eliminado' : 'Cliente #$idCliente'));
 
+      final emailCli = (cliente?.correoCliente ?? '').trim();
+
       final lineasRaw = porPedido[id] ?? const [];
       final lineas = lineasRaw.map((d) {
         final idProdRaw = d['id_producto'];
@@ -76,6 +81,7 @@ class FacturasService {
           documento: cliente != null
               ? '${cliente.tipoDocumento} ${cliente.documento}'
               : null,
+          emailCliente: emailCli.isEmpty ? null : emailCli,
           fecha: _formatFecha(
             p['fecha_pedido'] ?? p['created_at'] ?? p['creado_en'],
           ),
@@ -93,7 +99,6 @@ class FacturasService {
 
   String _str(dynamic v) => (v?.toString() ?? '').trim();
 
-  /// Ejemplo: 02 Nov 2026 · 14:35
   String _formatFecha(dynamic raw) {
     if (raw == null) return '—';
     try {
@@ -167,18 +172,15 @@ class FacturasService {
             body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 30));
-      final d = r.body.isEmpty
-          ? null
-          : jsonDecode(utf8.decode(r.bodyBytes));
+      final d =
+          r.body.isEmpty ? null : jsonDecode(utf8.decode(r.bodyBytes));
       if (r.statusCode < 200 || r.statusCode >= 300) {
         final err = d is Map && d['error'] is String
             ? d['error'] as String
             : 'No se pudo enviar el correo.';
         throw FacturasException(err);
       }
-      return d is Map<String, dynamic>
-          ? d
-          : {'message': 'Enviado'};
+      return d is Map<String, dynamic> ? d : {'message': 'Enviado'};
     } on SocketException {
       throw const FacturasException('Sin conexión.');
     } on TimeoutException {

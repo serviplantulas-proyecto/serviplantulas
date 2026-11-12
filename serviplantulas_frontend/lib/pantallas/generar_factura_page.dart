@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../componentes/ventas/factura_list_card.dart';
@@ -39,28 +38,29 @@ class _GenerarFacturaPageState extends State<GenerarFacturaPage> {
       _snack('No hay factura para enviar', error: true);
       return;
     }
+
+    final email = (_f.emailCliente ?? '').trim();
+    if (email.isEmpty) {
+      _snack(
+        'El cliente no tiene correo registrado. Agrégalo en su ficha.',
+        error: true,
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final email = prefs.getString('user_email') ?? '';
-      final nombre = [
-        prefs.getString('user_nombre') ?? '',
-        prefs.getString('user_apellido') ?? '',
-      ].where((s) => s.trim().isNotEmpty).join(' ');
-
       final res = await _service.enviarPorCorreo(
         factura: _f,
-        email: email.isEmpty ? null : email,
-        nombre: nombre.isEmpty ? null : nombre,
+        email: email,
+        nombre: _f.cliente,
       );
       if (!mounted) return;
       _snack('Enviado a ${res['email'] ?? email}');
     } on FacturasException catch (e) {
       if (mounted) _snack(e.message, error: true);
     } catch (_) {
-      if (mounted) {
-        _snack('No se pudo enviar el correo', error: true);
-      }
+      if (mounted) _snack('No se pudo enviar el correo', error: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

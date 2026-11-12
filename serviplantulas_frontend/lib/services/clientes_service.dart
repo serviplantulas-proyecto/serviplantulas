@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-
+import 'alertas_prefs_service.dart';
 import '../models/cliente.dart';
 import 'api_config.dart';
 
@@ -58,7 +58,11 @@ class ClientesService {
       if (cedulaCliente != null) 'cedula_cliente': cedulaCliente,
     };
     final decoded = await _post(Uri.parse(ApiConfig.clientesUrl), body);
-    return _extraer(decoded);
+    final cliente = _extraer(decoded);
+    try {
+      await AlertasPrefsService().notificarNuevoCliente(cliente.nombre);
+    } catch (_) {}
+    return cliente;
   }
 
   Future<Cliente> actualizar({

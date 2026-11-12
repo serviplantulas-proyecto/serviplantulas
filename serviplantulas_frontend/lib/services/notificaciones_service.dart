@@ -14,8 +14,6 @@ class NotificacionesException implements Exception {
   String toString() => message;
 }
 
-
-
 class NotificacionItem {
   final int id;
   final String titulo;
@@ -40,10 +38,31 @@ class NotificacionItem {
       mensaje: (j['mensaje'] ?? '').toString(),
       tipo: (j['tipo'] ?? 'general').toString(),
       leida: j['leida'] == true,
-      creadaEn: j['creada_en'] != null
-          ? DateTime.tryParse(j['creada_en'].toString())
-          : null,
+      creadaEn: _parseFecha(j['creada_en']),
     );
+  }
+
+  /// Supabase guarda UTC sin zona; si no hay Z/+offset, se asume UTC.
+  static DateTime? _parseFecha(dynamic raw) {
+    if (raw == null) return null;
+    final s = raw.toString().trim();
+    if (s.isEmpty) return null;
+    final parsed = DateTime.tryParse(s);
+    if (parsed == null) return null;
+    final hasTz =
+        s.endsWith('Z') || RegExp(r'[+-]\d{2}:\d{2}$').hasMatch(s);
+    if (!hasTz) {
+      return DateTime.utc(
+        parsed.year,
+        parsed.month,
+        parsed.day,
+        parsed.hour,
+        parsed.minute,
+        parsed.second,
+        parsed.millisecond,
+      ).toLocal();
+    }
+    return parsed.toLocal();
   }
 
   static int _asInt(dynamic v) {

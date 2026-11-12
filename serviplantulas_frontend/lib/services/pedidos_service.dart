@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'alertas_prefs_service.dart';
 import '../componentes/ventas/venta_productos_section.dart';
 import 'api_config.dart';
 
@@ -67,6 +67,15 @@ class PedidosService {
       {'total': total},
       token: token,
     );
+
+    try {
+      await AlertasPrefsService().notificarVenta(
+        cliente: nombreCliente ?? 'Cliente',
+        total: total,
+        idPedido: idPedido,
+      );
+    } catch (_) {}
+
     return idPedido;
   }
 

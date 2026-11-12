@@ -12,6 +12,7 @@ class FacturaListItem {
   final double total;
   final String estado;
   final String? documento;
+  final String? emailCliente;
   final String? vendedor;
   final String metodoPago;
   final List<FacturaLinea> lineas;
@@ -26,6 +27,7 @@ class FacturaListItem {
     required this.total,
     required this.estado,
     this.documento,
+    this.emailCliente,
     this.vendedor,
     this.metodoPago = 'Efectivo',
     this.lineas = const [],
@@ -66,7 +68,6 @@ class FacturaListCard extends StatelessWidget {
     return '${buf.toString()} COP';
   }
 
-  /// "Transferencia" → "Trans...", "Efectivo" → "Efec..." si hace falta espacio.
   String _metodoCorto(String m) {
     final t = m.trim();
     if (t.length <= 5) return t;

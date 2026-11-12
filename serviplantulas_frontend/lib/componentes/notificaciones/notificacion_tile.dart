@@ -31,11 +31,22 @@ class NotificacionTile extends StatelessWidget {
   String get _tiempo {
     final d = item.creadaEn;
     if (d == null) return '';
-    final diff = DateTime.now().difference(d.toLocal());
+    var diff = DateTime.now().difference(d);
+    // Si la fecha quedó en el futuro (UTC mal parseado), no mostrar negativo
+    if (diff.isNegative) diff = Duration.zero;
+
+    if (diff.inMinutes < 1) return 'Hace un momento';
     if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Hace ${diff.inHours} hora${diff.inHours == 1 ? '' : 's'}';
+    if (diff.inHours < 24) {
+      final h = diff.inHours;
+      return 'Hace $h hora${h == 1 ? '' : 's'}';
+    }
     if (diff.inDays == 1) return 'Hace 1 día';
-    return 'Hace ${diff.inDays} días';
+    if (diff.inDays < 30) return 'Hace ${diff.inDays} días';
+    final meses = (diff.inDays / 30).floor();
+    if (meses < 12) return 'Hace $meses mes${meses == 1 ? '' : 'es'}';
+    final anios = (diff.inDays / 365).floor();
+    return 'Hace $anios año${anios == 1 ? '' : 's'}';
   }
 
   @override

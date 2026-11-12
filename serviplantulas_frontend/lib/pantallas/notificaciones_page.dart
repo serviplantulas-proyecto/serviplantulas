@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../componentes/notificaciones/notificacion_tile.dart';
 import '../componentes/notificaciones/notificaciones_app_bar.dart';
+import '../services/alertas_prefs_service.dart';
 import '../services/notificaciones_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
@@ -15,6 +16,7 @@ class NotificacionesPage extends StatefulWidget {
 
 class _NotificacionesPageState extends State<NotificacionesPage> {
   final _service = NotificacionesService();
+  final _prefs = AlertasPrefsService();
   List<NotificacionItem> _items = [];
   bool _loading = true;
   String? _error;
@@ -33,6 +35,12 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
       _error = null;
     });
     try {
+      // Aplicar retención configurada al abrir
+      try {
+        final dias = await _prefs.retencionDias();
+        await _service.limpiarAntiguas(dias);
+      } catch (_) {}
+
       final list = await _service.listar();
       if (!mounted) return;
       setState(() {
@@ -85,7 +93,7 @@ class _NotificacionesPageState extends State<NotificacionesPage> {
               child: Row(
                 children: [
                   Text(
-                    'Mostrando alertas de hoy',
+                    'Tus alertas',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
