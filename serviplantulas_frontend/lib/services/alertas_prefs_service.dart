@@ -2,6 +2,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/producto.dart';
+import 'local_notification_service.dart';
 import 'notificaciones_service.dart';
 import 'productos_service.dart';
 
@@ -46,6 +47,15 @@ class AlertasPrefsService {
     return p.getBool(key) ?? def;
   }
 
+  Future<void> _pushSistema(String titulo, String cuerpo) async {
+    try {
+      await LocalNotificationService.instance.mostrar(
+        titulo: titulo,
+        cuerpo: cuerpo,
+      );
+    } catch (_) {}
+  }
+
   Future<String> guardarYAplicar(Map<String, dynamic> flags) async {
     await guardar(flags);
     final dias =
@@ -63,11 +73,11 @@ class AlertasPrefsService {
   }
 
   Future<void> solicitarPermisoNotificaciones() async {
-    final status = await Permission.notification.request();
+    await LocalNotificationService.instance.pedirPermiso();
+    final status = await Permission.notification.status;
     if (status.isPermanentlyDenied) await openAppSettings();
   }
 
-  /// Stock bajo + sin existencias (respeta preferencia stock).
   Future<int> sincronizarStockBajo() async {
     if (!await _flag(_kStock)) return 0;
     final productos = await ProductosService().listar();
@@ -104,26 +114,32 @@ class AlertasPrefsService {
   ) async {
     if (prod.stock == 0) {
       if (_yaTipo(existentes, 'sin_stock', prod)) return false;
+      final titulo = 'Sin existencias';
+      final msg =
+          'El producto ${prod.nombre} se quedó sin existencias (0 unidades).';
       await notifs.crear(
-        titulo: 'Sin existencias',
-        mensaje:
-            'El producto ${prod.nombre} se quedó sin existencias (0 unidades).',
+        titulo: titulo,
+        mensaje: msg,
         tipo: 'sin_stock',
         idProducto: prod.idProducto,
       );
+      await _pushSistema(titulo, msg);
       return true;
     }
     final min = prod.stockMinimo;
     if (min <= 0 || prod.stock > min) return false;
     if (_yaTipo(existentes, 'poco_stock', prod)) return false;
+    final titulo = 'Alerta de Stock Crítico';
+    final msg =
+        'El stock de ${prod.nombre} ha bajado a ${prod.stock} unidades '
+        '(Mínimo requerido: $min).';
     await notifs.crear(
-      titulo: 'Alerta de Stock Crítico',
-      mensaje:
-          'El stock de ${prod.nombre} ha bajado a ${prod.stock} unidades '
-          '(Mínimo requerido: $min).',
+      titulo: titulo,
+      mensaje: msg,
       tipo: 'poco_stock',
       idProducto: prod.idProducto,
     );
+    await _pushSistema(titulo, msg);
     return true;
   }
 
@@ -135,7 +151,6 @@ class AlertasPrefsService {
             n.mensaje.contains(prod.nombreProducto)));
   }
 
-  /// Alerta "Venta registrada" (si está activa en preferencias).
   Future<void> notificarVenta({
     required String cliente,
     required double total,
@@ -144,23 +159,28 @@ class AlertasPrefsService {
     if (!await _flag(_kVenta)) return;
     try {
       final t = total.toStringAsFixed(0);
+      final titulo = 'Venta registrada';
+      final msg = 'Pedido #$idPedido · $cliente · $t COP';
       await NotificacionesService().crear(
-        titulo: 'Venta registrada',
-        mensaje: 'Pedido #$idPedido · $cliente · $t COP',
+        titulo: titulo,
+        mensaje: msg,
         tipo: 'venta_registrada',
       );
+      await _pushSistema(titulo, msg);
     } catch (_) {}
   }
 
-  /// Alerta "Nuevo cliente".
   Future<void> notificarNuevoCliente(String nombre) async {
     if (!await _flag(_kCliente, def: false)) return;
     try {
+      final titulo = 'Nuevo cliente';
+      final msg = 'Se agregó al directorio: $nombre';
       await NotificacionesService().crear(
-        titulo: 'Nuevo cliente',
-        mensaje: 'Se agregó al directorio: $nombre',
+        titulo: titulo,
+        mensaje: msg,
         tipo: 'nuevo_cliente',
       );
+      await _pushSistema(titulo, msg);
     } catch (_) {}
   }
 }

@@ -22,7 +22,7 @@ class ApiConfig {
 
   static const String googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: 'PON_AQUI_TU_CLIENT_ID.apps.googleusercontent.com',
+    defaultValue: '458687825748-4k5ef66tkmgu3hf1btqpjb7c53isnrc4.apps.googleusercontent.com',
   );
 
   // ── Chat ──
