@@ -38,7 +38,7 @@ class MainApp extends StatelessWidget {
 //comando para iniciar con opera |°/- $env:CHROME_EXECUTABLE="C:\Users\FINISTERRA\AppData\Local\Programs\Opera GX\opera.exe" -\°|
 //guia del panel administrativo  |°/- https://jlombanar.github.io/adso_3169657/ -\°|
 
-//pantallas para reducir(sacar widgets): detalle_producto_page.dart, analisis_ventas_page.dart, registro_venta_page.dart, registrar_producto_page.dart, inventario_page.dart, directorio_proveedores_page.dart, categorias_page.dart, agregar_proveedor_page.dart, generar_factura_page.dart, chat_eva_page.dart, mi_cuenta_page.dart.
+//archivos para reducir(sacar widgets): inventory_product_card.dart, producto_image_selector.dart, venta_productos_section.dart, agregar_categoria_page.dart, agregar_proveedor_page.dart, detalle_producto_page.dart, inventario_page.dart, registrar_producto_page.dart, auth_service.dart, notificaciones_service.dart, productos_service.dart
 
 //configirar permisos y credenciales del github:
 //PS D:\Programacion\web-adso> git config --global user.name "serviplantulas-proyecto"

@@ -9,17 +9,13 @@ import '../services/auth_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 import '../componentes/compartidos/password_rules.dart';
-
 class VerificarCodigoRecuperacionPage extends StatefulWidget {
   final String email;
-
   const VerificarCodigoRecuperacionPage({super.key, required this.email});
-
   @override
   State<VerificarCodigoRecuperacionPage> createState() =>
       _VerificarCodigoRecuperacionPageState();
 }
-
 class _VerificarCodigoRecuperacionPageState
     extends State<VerificarCodigoRecuperacionPage> {
   final _formKey = GlobalKey<FormState>();
@@ -36,7 +32,6 @@ class _VerificarCodigoRecuperacionPageState
     _confirmPasswordController.dispose();
     super.dispose();
   }
-
   Future<void> _submitChange() async {
     if (_code.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,7 +42,6 @@ class _VerificarCodigoRecuperacionPageState
       );
       return;
     }
-
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
       try {
@@ -74,7 +68,6 @@ class _VerificarCodigoRecuperacionPageState
       }
     }
   }
-
   /// Reenvía el código de recuperación (mismo endpoint que el paso 1).
   Future<void> _volverASolicitar() async {
     if (_isResending || _isLoading) return;
@@ -98,7 +91,6 @@ class _VerificarCodigoRecuperacionPageState
       if (mounted) setState(() => _isResending = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../componentes/categorias/categoria_color_picker.dart';
 import '../componentes/categorias/categoria_list_card.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
@@ -11,14 +9,12 @@ import '../services/productos_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 import 'agregar_categoria_page.dart';
-
 class CategoriasPage extends StatefulWidget {
   const CategoriasPage({super.key});
 
   @override
   State<CategoriasPage> createState() => _CategoriasPageState();
 }
-
 class _CategoriasPageState extends State<CategoriasPage> {
   final _catService = CategoriasService();
   final _prodService = ProductosService();
@@ -28,13 +24,11 @@ class _CategoriasPageState extends State<CategoriasPage> {
   Map<int, int> _colores = {};
   bool _loading = true;
   String? _error;
-
   @override
   void initState() {
     super.initState();
     _cargar();
   }
-
   Future<void> _cargar() async {
     setState(() {
       _loading = true;
@@ -79,7 +73,6 @@ class _CategoriasPageState extends State<CategoriasPage> {
       });
     }
   }
-
   Future<void> _abrirForm({Categoria? categoria}) async {
     final ok = await Navigator.push<bool>(
       context,
@@ -89,7 +82,6 @@ class _CategoriasPageState extends State<CategoriasPage> {
     );
     if (ok == true) _cargar();
   }
-
   Future<void> _eliminar(Categoria c) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -127,7 +119,6 @@ class _CategoriasPageState extends State<CategoriasPage> {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,7 +138,6 @@ class _CategoriasPageState extends State<CategoriasPage> {
       ),
     );
   }
-
   Widget _body() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());

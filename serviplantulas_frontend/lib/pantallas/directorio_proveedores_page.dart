@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../componentes/inventario/inventory_search_bar.dart';
 import '../componentes/proveedores/proveedor_expandable_card.dart';
@@ -8,7 +7,6 @@ import '../services/proveedores_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_text_styles.dart';
 import 'agregar_proveedor_page.dart';
-
 class DirectorioProveedoresPage extends StatefulWidget {
   const DirectorioProveedoresPage({super.key});
 
@@ -16,7 +14,6 @@ class DirectorioProveedoresPage extends StatefulWidget {
   State<DirectorioProveedoresPage> createState() =>
       _DirectorioProveedoresPageState();
 }
-
 class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
   final _service = ProveedoresService();
   final _searchCtrl = TextEditingController();
@@ -32,13 +29,11 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
     super.initState();
     _cargar();
   }
-
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
   }
-
   Future<void> _cargar() async {
     setState(() {
       _loading = true;
@@ -62,7 +57,6 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
       });
     }
   }
-
   void _aplicarFiltro() {
     final q = _searchCtrl.text.trim().toLowerCase();
     _filtrados = q.isEmpty
@@ -77,7 +71,6 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
                 (p.direccionProveedor?.toLowerCase().contains(q) ?? false))
             .toList();
   }
-
   Future<void> _abrirForm({Proveedor? proveedor}) async {
     final ok = await Navigator.push<bool>(
       context,
@@ -87,7 +80,6 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
     );
     if (ok == true) _cargar();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,7 +125,6 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
       ),
     );
   }
-
   Widget _chip(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -153,7 +144,6 @@ class _DirectorioProveedoresPageState extends State<DirectorioProveedoresPage> {
       ]),
     );
   }
-
   Widget _body() {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {

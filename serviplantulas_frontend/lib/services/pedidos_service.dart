@@ -165,7 +165,6 @@ class PedidosService {
       throw const PedidosException('El servidor no respondió a tiempo.');
     }
   }
-
   dynamic _decode(http.Response r) {
     if (r.body.isEmpty) return null;
     try {
@@ -174,7 +173,6 @@ class PedidosService {
       throw const PedidosException('Respuesta no válida del servidor.');
     }
   }
-
   List<Map<String, dynamic>> _asList(dynamic d) {
     if (d is List) {
       return d
@@ -184,13 +182,11 @@ class PedidosService {
     }
     return const [];
   }
-
   int _asInt(dynamic v) {
     if (v is int) return v;
     if (v is double) return v.toInt();
     return int.tryParse(v?.toString() ?? '') ?? 0;
   }
-
   String _err(dynamic d, String fallback) {
     if (d is Map && d['error'] is String && (d['error'] as String).isNotEmpty) {
       return d['error'] as String;
