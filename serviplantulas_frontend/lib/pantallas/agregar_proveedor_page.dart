@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../componentes/boton/app_button.dart';
 import '../componentes/compartidos/app_bar_simple.dart';
 import '../componentes/proveedores/proveedor_form_body.dart';
+import '../componentes/proveedores/proveedor_form_helpers.dart';
 import '../models/proveedor.dart';
 import '../services/proveedores_service.dart';
 import '../styles/app_colors.dart';
@@ -36,39 +36,17 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
     _nombreCtrl.text = p.nombreProveedor;
     _telCtrl.text = p.telefonoProveedor ?? '';
     _emailCtrl.text = p.emailProveedor ?? '';
-    final dir = p.direccionProveedor;
-    if (dir != null && dir.contains(' | ')) {
-      final parts = dir.split(' | ');
-      _ciudadCtrl.text = parts.first.trim();
-      _direccionCtrl.text = parts.skip(1).join(' | ').trim();
-    } else if (dir != null) {
-      _direccionCtrl.text = dir;
-    }
-    _loadExtras(p.idProveedor);
-  }
-
-  Future<void> _loadExtras(int id) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _nitCtrl.text = prefs.getString('prov_nit_$id') ?? '';
-      _productosSel
-        ..clear()
-        ..addAll(prefs.getStringList('prov_prods_$id') ?? []);
-    });
-  }
-
-  Future<void> _saveExtras(int id) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('prov_nit_$id', _nitCtrl.text.trim());
-    await prefs.setStringList('prov_prods_$id', _productosSel.toList());
-  }
-
-  String get _dir {
-    final c = _ciudadCtrl.text.trim();
-    final d = _direccionCtrl.text.trim();
-    if (c.isNotEmpty && d.isNotEmpty) return '$c | $d';
-    return c.isNotEmpty ? c : d;
+    splitProveedorDireccion(
+      p.direccionProveedor,
+      ciudadCtrl: _ciudadCtrl,
+      direccionCtrl: _direccionCtrl,
+    );
+    loadProveedorExtras(
+      id: p.idProveedor,
+      nitCtrl: _nitCtrl,
+      productosSel: _productosSel,
+      setState: setState,
+    );
   }
 
   @override
@@ -94,6 +72,7 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
       _snack('El nombre / razón social es obligatorio', err: true);
       return;
     }
+    final dir = composeProveedorDireccion(_ciudadCtrl.text, _direccionCtrl.text);
     setState(() => _loading = true);
     try {
       if (_edit) {
@@ -102,9 +81,13 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
           'nombre_proveedor': nombre,
           'telefono_proveedor': _telCtrl.text.trim(),
           'email_proveedor': _emailCtrl.text.trim(),
-          'direccion_proveedor': _dir,
+          'direccion_proveedor': dir,
         });
-        await _saveExtras(id);
+        await saveProveedorExtras(
+          id: id,
+          nit: _nitCtrl.text.trim(),
+          productos: _productosSel.toList(),
+        );
         if (mounted) _snack('Proveedor actualizado');
       } else {
         String? n(String s) => s.trim().isEmpty ? null : s.trim();
@@ -112,9 +95,13 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
           nombreProveedor: nombre,
           telefonoProveedor: n(_telCtrl.text),
           emailProveedor: n(_emailCtrl.text),
-          direccionProveedor: _dir.isEmpty ? null : _dir,
+          direccionProveedor: dir.isEmpty ? null : dir,
         );
-        await _saveExtras(creado.idProveedor);
+        await saveProveedorExtras(
+          id: creado.idProveedor,
+          nit: _nitCtrl.text.trim(),
+          productos: _productosSel.toList(),
+        );
         if (mounted) _snack('Proveedor guardado');
       }
       if (mounted) Navigator.pop(context, true);
@@ -128,35 +115,13 @@ class _AgregarProveedorPageState extends State<AgregarProveedorPage> {
   }
 
   Future<void> _eliminar() async {
-    final id = widget.proveedor?.idProveedor;
-    if (id == null) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar proveedor'),
-        content: const Text(
-          '¿Eliminar este proveedor? Los productos vinculados '
-          'quedarán sin proveedor asignado.',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
+    final id = widget.proveedor!.idProveedor;
+    final ok = await confirmarEliminarProveedor(context);
+    if (!ok || !mounted) return;
     setState(() => _loading = true);
     try {
       await _service.eliminar(id);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('prov_nit_$id');
-      await prefs.remove('prov_prods_$id');
+      await removeProveedorExtras(id);
       if (!mounted) return;
       _snack('Proveedor eliminado');
       Navigator.pop(context, true);

@@ -1,77 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'api_config.dart';
+import 'auth_http.dart';
 
-class AuthException implements Exception {
-  final String message;
-
-  const AuthException(this.message);
-
-  @override
-  String toString() => message;
-}
+export 'auth_http.dart' show AuthException;
 
 class AuthService {
-  static Future<Map<String, dynamic>> _postAuth({
-    required String url,
-    required Map<String, Object?> body,
-    required String fallbackMessage,
-    Duration timeout = const Duration(seconds: 30),
-  }) async {
-    late final http.Response response;
-    try {
-      response = await http
-          .post(
-            Uri.parse(url),
-            headers: ApiConfig.headers,
-            body: jsonEncode(body),
-          )
-          .timeout(timeout);
-    } on SocketException {
-      throw const AuthException(
-        'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.',
-      );
-    } on TimeoutException {
-      throw const AuthException(
-        'El servidor tardó demasiado en responder. Inténtalo de nuevo.',
-      );
-    } on http.ClientException {
-      throw const AuthException(
-        'No se pudo conectar con el servidor. Inténtalo de nuevo.',
-      );
-    }
-
-    final dynamic decoded;
-    try {
-      decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    } on FormatException {
-      throw const AuthException(
-        'El servidor devolvió una respuesta no válida.',
-      );
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw const AuthException(
-        'El servidor devolvió una respuesta no válida.',
-      );
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final error = decoded['error'];
-      throw AuthException(
-        error is String && error.isNotEmpty ? error : fallbackMessage,
-      );
-    }
-
-    return decoded;
-  }
-
   static Future<void> registrarCuenta({
     required String nombre,
     required String apellido,
@@ -79,7 +11,7 @@ class AuthService {
     required String email,
     required String contrasena,
   }) async {
-    await _postAuth(
+    await postAuth(
       url: ApiConfig.registerUrl,
       body: {
         'nombre_usuarios': nombre,
@@ -96,7 +28,7 @@ class AuthService {
     required String email,
     required String codigo,
   }) async {
-    await _postAuth(
+    await postAuth(
       url: ApiConfig.verifyAccountUrl,
       body: {'email_usuarios': email, 'codigo': codigo},
       fallbackMessage: 'No fue posible verificar la cuenta.',
@@ -106,7 +38,7 @@ class AuthService {
   static Future<void> reenviarCodigoVerificacion({
     required String email,
   }) async {
-    await _postAuth(
+    await postAuth(
       url: ApiConfig.resendVerificationUrl,
       body: {'email_usuarios': email},
       fallbackMessage: 'No fue posible enviar un nuevo código.',
@@ -114,7 +46,7 @@ class AuthService {
   }
 
   static Future<void> solicitarRecuperacion({required String email}) async {
-    await _postAuth(
+    await postAuth(
       url: ApiConfig.forgotPasswordUrl,
       body: {'email': email},
       fallbackMessage: 'No fue posible enviar el código de recuperación.',
@@ -127,7 +59,7 @@ class AuthService {
     required String codigo,
     required String nuevaContrasena,
   }) async {
-    await _postAuth(
+    await postAuth(
       url: ApiConfig.verifyRecoveryCodeUrl,
       body: {
         'email': email,
@@ -145,7 +77,7 @@ class AuthService {
     String? nuevoEmail,
     String? nuevoTelefono,
   }) async {
-    return _postAuth(
+    return postAuth(
       url: ApiConfig.verifyProfileChangeUrl,
       body: {
         'email': email,
@@ -162,122 +94,20 @@ class AuthService {
     required String email,
     required String contrasena,
   }) async {
-    final decoded = await _postAuth(
+    final decoded = await postAuth(
       url: ApiConfig.loginUrl,
       body: {'email_usuarios': email, 'contrasena_usuarios': contrasena},
       fallbackMessage: 'No fue posible iniciar sesión. Inténtalo de nuevo.',
     );
-
-    final token = decoded['token'];
-    if (token is! String || token.isEmpty) {
-      throw const AuthException(
-        'El servidor no devolvió un token de sesión válido.',
-      );
-    }
-
-    try {
-      final preferences = await SharedPreferences.getInstance();
-      final saved = await preferences.setString('auth_token', token);
-      if (!saved) {
-        throw const AuthException(
-          'No se pudo guardar la sesión en este dispositivo.',
-        );
-      }
-
-      // Guardar datos del usuario para Mi Cuenta
-      final u = decoded['usuario'];
-      if (u is Map) {
-        await preferences.setString(
-          'user_email',
-          (u['email'] ?? email).toString(),
-        );
-        await preferences.setString(
-          'user_nombre',
-          (u['nombre'] ?? '').toString(),
-        );
-        await preferences.setString(
-          'user_apellido',
-          (u['apellido'] ?? '').toString(),
-        );
-        await preferences.setString(
-          'user_rol',
-          (u['rol'] ?? 'usuario').toString(),
-        );
-        if (u['telefono'] != null) {
-          await preferences.setString(
-            'user_telefono',
-            u['telefono'].toString(),
-          );
-        }
-        if (u['id'] != null) {
-          await preferences.setInt(
-            'user_id',
-            int.tryParse(u['id'].toString()) ?? 0,
-          );
-        }
-      } else {
-        await preferences.setString('user_email', email);
-      }
-    } on PlatformException {
-      throw const AuthException(
-        'No se pudo guardar la sesión en este dispositivo.',
-      );
-    }
+    await guardarSesionDesdeLogin(decoded, emailFallback: email);
   }
 
-    static Future<void> iniciarSesionGoogle({required String idToken}) async {
-    final decoded = await _postAuth(
+  static Future<void> iniciarSesionGoogle({required String idToken}) async {
+    final decoded = await postAuth(
       url: ApiConfig.googleAuthUrl,
       body: {'idToken': idToken},
       fallbackMessage: 'No fue posible iniciar sesión con Google.',
     );
-
-    final token = decoded['token'];
-    if (token is! String || token.isEmpty) {
-      throw const AuthException(
-        'El servidor no devolvió un token de sesión válido.',
-      );
-    }
-
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString('auth_token', token);
-
-    final u = decoded['usuario'];
-    if (u is Map) {
-      await preferences.setString(
-        'user_email',
-        (u['email'] ?? '').toString(),
-      );
-      await preferences.setString(
-        'user_nombre',
-        (u['nombre'] ?? '').toString(),
-      );
-      await preferences.setString(
-        'user_apellido',
-        (u['apellido'] ?? '').toString(),
-      );
-      await preferences.setString(
-        'user_rol',
-        (u['rol'] ?? 'usuario').toString(),
-      );
-      if (u['telefono'] != null) {
-        await preferences.setString(
-          'user_telefono',
-          u['telefono'].toString(),
-        );
-      }
-      if (u['id'] != null) {
-        await preferences.setInt(
-          'user_id',
-          int.tryParse(u['id'].toString()) ?? 0,
-        );
-      }
-      if (u['avatar'] != null) {
-        await preferences.setString(
-          'user_avatar',
-          u['avatar'].toString(),
-        );
-      }
-    }
+    await guardarSesionDesdeLogin(decoded);
   }
 }

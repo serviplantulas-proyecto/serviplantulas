@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../componentes/inventario/category_chips.dart';
-import '../componentes/inventario/inventory_product_card.dart';
-import '../componentes/inventario/inventory_search_bar.dart';
+import '../componentes/inventario/inventario_app_bar.dart';
+import '../componentes/inventario/inventario_body.dart';
+import '../componentes/inventario/inventario_search_section.dart';
 import '../models/producto.dart';
 import '../services/inventario_service.dart';
 import '../services/productos_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_text_styles.dart';
 import 'ajustar_stock_page.dart';
 import 'detalle_producto_page.dart';
 import 'registrar_producto_page.dart';
@@ -101,6 +100,13 @@ class _InventarioPageState extends State<InventarioPage> {
     if (ok == true) _cargar();
   }
 
+  void _abrirDetalle(Producto p) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DetalleProductoPage(producto: p)),
+    ).then((_) => _cargar());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,9 +115,28 @@ class _InventarioPageState extends State<InventarioPage> {
         bottom: false,
         child: Column(
           children: [
-            _buildAppBar(),
-            _buildSearchSection(),
-            Expanded(child: _buildBody()),
+            const InventarioAppBar(),
+            InventarioSearchSection(
+              searchController: _searchController,
+              categorias: _categorias,
+              seleccionada: _categoriaSel,
+              onCategoriaSelected: (cat) {
+                setState(() => _categoriaSel = cat);
+                _filtrar();
+              },
+              onSearchChanged: () => _filtrar(),
+            ),
+            Expanded(
+              child: InventarioBody(
+                loading: _loading,
+                error: _error,
+                productos: _productos,
+                onRefresh: _cargar,
+                onRetry: _cargar,
+                onAjustarStock: _abrirAjustar,
+                onOpenDetalle: _abrirDetalle,
+              ),
+            ),
           ],
         ),
       ),
@@ -119,126 +144,6 @@ class _InventarioPageState extends State<InventarioPage> {
         onPressed: _abrirRegistrar,
         backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextButton(onPressed: _cargar, child: const Text('Reintentar')),
-            ],
-          ),
-        ),
-      );
-    }
-    if (_productos.isEmpty) {
-      return Center(
-        child: Text(
-          'No hay productos',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textMuted,
-          ),
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: _cargar,
-      color: AppColors.primary,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-        itemCount: _productos.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final p = _productos[index];
-          return InventoryProductCard(
-            producto: p,
-            onAjustarStock: () => _abrirAjustar(p),
-            onEditar: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DetalleProductoPage(producto: p),
-                ),
-              ).then((_) => _cargar());
-            },
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DetalleProductoPage(producto: p),
-                ),
-              ).then((_) => _cargar());
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Inventario Serviplantulas',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-              fontSize: 18,
-            ),
-          ),
-          const Icon(Icons.grid_view, color: AppColors.primary, size: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchSection() {
-    return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      child: Column(
-        children: [
-          InventorySearchBar(
-            controller: _searchController,
-            onChanged: (_) => _filtrar(),
-          ),
-          const SizedBox(height: 12),
-          CategoryChips(
-            categorias: _categorias,
-            seleccionada: _categoriaSel,
-            onSelected: (cat) {
-              setState(() => _categoriaSel = cat);
-              _filtrar();
-            },
-          ),
-        ],
       ),
     );
   }
