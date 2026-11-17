@@ -73,7 +73,7 @@ export const autenticarConGoogle = async (req, res) => {
                 console.error("Error crearUsuarioGoogle:", errorCrear);
                 return res.status(500).json({
                     error: "Error al registrar el usuario con Google",
-                    detalle: errorCrear?.message
+                    detalle: errorCrear?.message || errorCrear?.details || errorCrear?.hint || String(errorCrear)
                 });
             }
             usuarioFinal = Array.isArray(nuevoUsuario)

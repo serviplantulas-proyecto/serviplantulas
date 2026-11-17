@@ -127,35 +127,43 @@ export const verificarUsuario = async (id) => {
 
 //crear usuario google
     export const crearUsuarioGoogle = async ({
-        nombre_usuarios,
-        apellido_usuarios,
-        email_usuarios,
-        googleId,
-        avatar,
-        rol_usuarios = "usuario"
-    }) => {
-        const hashPlaceholder = await bcrypt.hash(
-            `google_${googleId}_${Date.now()}`,
-            10
-        );
-    
-        const { data, error } = await supabase
-            .from("usuarios")
-            .insert({
-                nombre_usuarios,
-                apellido_usuarios: apellido_usuarios || "",
-                telefono_usuarios: null,
-                email_usuarios,
-                contrasena_usuarios: hashPlaceholder,
-                googleId,
-                avatar,
-                rol_usuarios,
-                isVerified: true,
-                codigoVerificacion: null,
-                codigoVerificacionExpiracion: null
-            })
-            .select()
-            .single();
-    
-        return { data, error };
+    nombre_usuarios,
+    apellido_usuarios,
+    email_usuarios,
+    googleId,
+    avatar,
+    rol_usuarios = "usuario"
+}) => {
+    const hashPlaceholder = await bcrypt.hash(
+        `google_${googleId}_${Date.now()}`,
+        10
+    );
+
+    const fila = {
+        nombre_usuarios: (nombre_usuarios || "Usuario").toString().trim(),
+        apellido_usuarios: (apellido_usuarios || "").toString().trim(),
+        telefono_usuarios: "",
+        email_usuarios: String(email_usuarios).trim().toLowerCase(),
+        contrasena_usuarios: hashPlaceholder,
+        rol_usuarios,
+        isVerified: true,
+        codigoVerificacion: null,
+        codigoVerificacionExpiracion: null,
+        // Nombres según el schema (camelCase en Supabase)
+        googleId: googleId,
+        avatar: avatar || null
     };
+
+    const { data, error } = await supabase
+        .from("usuarios")
+        .insert(fila)
+        .select("*");
+
+    if (error) {
+        console.error("crearUsuarioGoogle error:", error);
+        return { data: null, error };
+    }
+
+    const user = Array.isArray(data) ? data[0] : data;
+    return { data: user || null, error: null };
+};
