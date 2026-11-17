@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../models/producto.dart';
 import '../../styles/app_colors.dart';
-import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
-import 'venta_qty_controls.dart';
+import 'venta_item_row.dart';
 import 'venta_search_field.dart';
+import 'venta_sugerencias_producto.dart';
 
 class ItemVenta {
   final Producto producto;
@@ -80,7 +80,7 @@ class VentaProductosSection extends StatelessWidget {
         ),
         if (sugerencias.isNotEmpty) ...[
           const SizedBox(height: 6),
-          _SugerenciasProducto(
+          VentaSugerenciasProducto(
             items: sugerencias,
             money: _money,
             onSelect: onProductoSeleccionado,
@@ -89,117 +89,15 @@ class VentaProductosSection extends StatelessWidget {
         const SizedBox(height: 12),
         ...List.generate(items.length, (i) {
           final item = items[i];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.medium),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.producto.nombre,
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Unitario: ${_money(item.producto.precio)}',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  VentaQtyBtn(
-                    icon: Icons.remove,
-                    onTap: () => onDecrement(i),
-                  ),
-                  VentaQtyField(
-                    value: item.cantidad,
-                    onChanged: (v) => onCantidadChanged?.call(i, v),
-                  ),
-                  VentaQtyBtn(
-                    icon: Icons.add,
-                    onTap: () => onIncrement(i),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _money(item.subtotal),
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          return VentaItemRow(
+            item: item,
+            money: _money,
+            onIncrement: () => onIncrement(i),
+            onDecrement: () => onDecrement(i),
+            onCantidadChanged: (v) => onCantidadChanged?.call(i, v),
           );
         }),
       ],
-    );
-  }
-}
-
-class _SugerenciasProducto extends StatelessWidget {
-  final List<Producto> items;
-  final String Function(double) money;
-  final ValueChanged<Producto>? onSelect;
-
-  const _SugerenciasProducto({
-    required this.items,
-    required this.money,
-    this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: items.map((p) {
-          return InkWell(
-            onTap: () => onSelect?.call(p),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      p.nombre,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    money(p.precio),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
     );
   }
 }

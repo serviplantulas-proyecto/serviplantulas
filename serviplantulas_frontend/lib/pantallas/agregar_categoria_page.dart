@@ -9,6 +9,7 @@ import '../services/categorias_service.dart';
 import '../styles/app_colors.dart';
 import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
+import '../componentes/compartidos/form_label_field.dart';
 import '../styles/app_text_styles.dart';
 
 class AgregarCategoriaPage extends StatefulWidget {
@@ -131,20 +132,20 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label('Nombre de la Categoría'),
-                    _field(_nombreCtrl, 'Ej. Plantas de Interior'),
+                    FormLabel('Nombre de la Categoría'),
+                    AppFormField(controller: _nombreCtrl, hint: 'Ej. Plantas de Interior'),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Descripción (Opcional)'),
+                    FormLabel('Descripción (Opcional)'),
                     TextField(
                       controller: _descCtrl,
                       maxLines: 3,
                       style: AppTextStyles.bodyMedium,
-                      decoration: _decoration(
+                      decoration: appFormDecoration(
                         'Escribe una breve descripción para organizar los productos de esta categoría...',
                       ),
                     ),
                     const SizedBox(height: AppSpacing.large),
-                    _label('Identificador (Icono o Color)'),
+                    FormLabel('Identificador (Icono o Color)'),
                     const SizedBox(height: 10),
                     CategoriaColorPicker(
                       selectedIndex: _colorIndex,
@@ -175,7 +176,7 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
     );
   }
 
-  Widget _label(String t) => Padding(
+  Widget FormLabel(String t) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
           t,
@@ -185,34 +186,4 @@ class _AgregarCategoriaPageState extends State<AgregarCategoriaPage> {
           ),
         ),
       );
-
-  Widget _field(TextEditingController ctrl, String hint) {
-    return TextField(
-      controller: ctrl,
-      style: AppTextStyles.bodyMedium,
-      decoration: _decoration(hint),
-    );
-  }
-
-  InputDecoration _decoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-      filled: true,
-      fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(color: AppColors.primary),
-      ),
-    );
-  }
 }

@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import 'producto_image_options_sheet.dart';
+import 'producto_image_placeholder.dart';
 
 /// Selector de foto (galería, cámara, drag & drop) con opción de quitar.
 class ProductoImageSelector extends StatefulWidget {
@@ -65,45 +67,11 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
 
   void _mostrarOpciones() {
     if (!widget.habilitado) return;
-    showModalBottomSheet(
+    showProductoImageOptionsSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Galería'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _elegir(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Cámara'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _elegir(ImageSource.camera);
-              },
-            ),
-            if (_tieneImagen && widget.onQuitar != null)
-              ListTile(
-                leading: const Icon(Icons.delete_outline, color: AppColors.error),
-                title: const Text('Quitar imagen'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  widget.onQuitar!();
-                },
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+      tieneImagen: _tieneImagen,
+      onQuitar: widget.onQuitar,
+      onElegir: _elegir,
     );
   }
 
@@ -131,9 +99,9 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
               ? Image.network(
                   widget.imagenUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder(),
+                  errorBuilder: (_, __, ___) => const ProductoImagePlaceholder(),
                 )
-              : _placeholder(),
+              : const ProductoImagePlaceholder(),
     );
 
     Widget contenido = GestureDetector(
@@ -208,25 +176,6 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
           style: AppTextStyles.label.copyWith(color: AppColors.textMuted),
         ),
       ],
-    );
-  }
-
-  Widget _placeholder() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.mutedGreen),
-          const SizedBox(height: 8),
-          Text(
-            'Agregar imagen',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

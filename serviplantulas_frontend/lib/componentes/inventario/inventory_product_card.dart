@@ -4,6 +4,8 @@ import '../../models/producto.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
+import 'inventory_product_thumb.dart';
+import 'inventory_small_action.dart';
 
 class InventoryProductCard extends StatelessWidget {
   final Producto producto;
@@ -46,32 +48,7 @@ class InventoryProductCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                color: AppColors.neutral,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: producto.imagenUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        producto.imagenUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.local_florist,
-                          color: AppColors.mutedGreen,
-                          size: 28,
-                        ),
-                      ),
-                    )
-                  : const Icon(
-                      Icons.local_florist,
-                      color: AppColors.mutedGreen,
-                      size: 28,
-                    ),
-            ),
+            InventoryProductThumb(imagenUrl: producto.imagenUrl),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -158,13 +135,13 @@ class InventoryProductCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _SmallAction(
+                      InventorySmallAction(
                         icon: Icons.swap_vert,
                         label: 'Ajustar Stock',
                         onTap: onAjustarStock,
                       ),
                       const SizedBox(width: 8),
-                      _SmallAction(
+                      InventorySmallAction(
                         icon: Icons.edit_outlined,
                         label: 'Editar',
                         onTap: onEditar,
@@ -172,47 +149,6 @@ class InventoryProductCard extends StatelessWidget {
                     ],
                   ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SmallAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  const _SmallAction({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: AppColors.primary),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: AppTextStyles.label.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 11,
               ),
             ),
           ],
