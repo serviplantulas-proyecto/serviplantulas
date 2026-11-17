@@ -58,12 +58,23 @@ export const obtenerPorId = async (id) => {
 
 // Obtener usuario por email
 export const obtenerPorEmail = async (email) => {
+    const { data, error } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("email_usuarios", String(email).trim().toLowerCase())
+        .maybeSingle();
+
+    return { data, error };
+};
+
+export const obtenerPorGoogleId = async (googleId) => {
+    if (!googleId) return { data: null, error: null };
 
     const { data, error } = await supabase
         .from("usuarios")
         .select("*")
-        .eq("email_usuarios", email)
-        .single();
+        .eq("googleId", googleId)
+        .maybeSingle();
 
     return { data, error };
 };
