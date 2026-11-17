@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import nodemailer from "nodemailer";
 
 import {
     crearCodigoRecuperacion,
@@ -12,19 +11,11 @@ import {
     actualizarUsuario
 } from "../models/usuarios-model.js";
 
-
-// Configuración de Nodemailer
-
-const transporter = nodemailer.createTransport({
-
-    service: "gmail",
-
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-    }
-
-});
+import {
+    enviarCodigoRecuperacion,
+    enviarConfirmacionCambioContrasena,
+    enviarConfirmacionCambioPerfil
+} from "../services/email-service.js";
 
 
 // ==========================================
@@ -97,68 +88,19 @@ export const forgotPassword = async (req, res) => {
         }
 
 
-        // Enviar correo
+        // Enviar correo con Brevo
 
-        await transporter.sendMail({
+        const envio = await enviarCodigoRecuperacion(
+            email,
+            usuario.nombre_usuarios,
+            codigo
+        );
 
-            from: process.env.EMAIL_USER,
-
-            to: email,
-
-            subject: "Código de recuperación - Serviplántulas",
-
-            html: `
-
-                <div style="
-                    font-family: Arial, sans-serif;
-                    max-width: 600px;
-                    margin: auto;
-                    padding: 20px;
-                    border: 1px solid #ddd;
-                    border-radius: 10px;
-                ">
-
-                    <h2>
-                        Recuperación de contraseña
-                    </h2>
-
-                    <p>
-                        Hola ${usuario.nombre_usuarios || "usuario"}.
-                    </p>
-                    <p>
-                        Hemos recibido una solicitud para
-                        recuperar tu contraseña.
-                    </p>
-                    <p>
-                        Tu código de recuperación es:
-                    </p>
-                    <h1 style="
-                        letter-spacing: 8px;
-                        text-align: center;
-                    ">
-                        ${codigo}
-                    </h1>
-                    <p>
-                        Este código expirará en
-                        <strong>15 minutos</strong>.
-                    </p>
-                    <p>
-                        Si no solicitaste este cambio,
-                        puedes ignorar este mensaje.
-                    </p>
-                    <p>
-                        <strong>
-                            No compartas este código con nadie.
-                        </strong>
-                    </p>
-                    <p>
-                        Serviplántulas 🌱
-                    </p>
-                </div>
-
-            `
-
-        });
+        if (!envio.exito) {
+            return res.status(502).json({
+                error: "No se pudo enviar el correo de recuperación. Inténtalo de nuevo."
+            });
+        }
 
 
         return res.status(200).json({
@@ -336,56 +278,13 @@ export const verifyCode = async (req, res) => {
         }
 
 
-        // Enviar confirmación por correo
+        // Enviar confirmación por correo (Brevo)
+        // No bloqueamos la respuesta si falla el envío
 
-        await transporter.sendMail({
-
-            from: process.env.EMAIL_USER,
-
-            to: email,
-
-            subject:
-                "Contraseña actualizada - Serviplántulas",
-
-            html: `
-
-                <div style="
-                    font-family: Arial, sans-serif;
-                    max-width: 600px;
-                    margin: auto;
-                    padding: 20px;
-                    border: 1px solid #ddd;
-                    border-radius: 10px;
-                ">
-
-                    <h2>
-                        Contraseña actualizada
-                    </h2>
-
-                    <p>
-                        Hola ${usuario.nombre_usuarios || "usuario"}.
-                    </p>
-
-                    <p>
-                        Tu contraseña de
-                        <strong>Serviplántulas</strong>
-                        ha sido actualizada correctamente.
-                    </p>
-
-                    <p>
-                        Si tú no realizaste este cambio,
-                        contacta al administrador.
-                    </p>
-
-                    <p>
-                        Serviplántulas 🌱
-                    </p>
-
-                </div>
-
-            `
-
-        });
+        await enviarConfirmacionCambioContrasena(
+            email,
+            usuario.nombre_usuarios
+        );
 
 
         return res.status(200).json({
@@ -469,22 +368,14 @@ export const verifyProfileChange = async (req, res) => {
         await marcarComoUsado(codigoRecord.id);
 
         const destino = nuevoEmail || email;
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: destino,
-            subject: "Datos de cuenta actualizados - Serviplántulas",
-            html: `
-                <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px;">
-                    <h2>Perfil actualizado</h2>
-                    <p>Hola ${usuario.nombre_usuarios || "usuario"}.</p>
-                    <p>Se actualizaron datos de tu cuenta en Serviplántulas.</p>
-                    ${nuevoEmail ? `<p><strong>Nuevo correo:</strong> ${nuevoEmail}</p>` : ""}
-                    ${nuevoTelefono ? `<p><strong>Nuevo teléfono:</strong> ${nuevoTelefono}</p>` : ""}
-                    <p>Si no fuiste tú, contacta al administrador.</p>
-                    <p>Serviplántulas 🌱</p>
-                </div>
-            `
-        });
+
+        // Enviar confirmación por correo (Brevo)
+        // No bloqueamos la respuesta si falla el envío
+        await enviarConfirmacionCambioPerfil(
+            destino,
+            usuario.nombre_usuarios,
+            { nuevoEmail, nuevoTelefono }
+        );
 
         return res.status(200).json({
             message: "Perfil actualizado correctamente",

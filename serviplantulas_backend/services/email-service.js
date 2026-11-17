@@ -45,6 +45,117 @@ export const enviarCodigoVerificacion = async (emailDestino, nombreDestino, codi
   }
 };
 
+/**
+ * Envía el código de recuperación de contraseña.
+ */
+export const enviarCodigoRecuperacion = async (emailDestino, nombreDestino, codigo) => {
+  try {
+    const brevo = clienteBrevo();
+    const result = await brevo.transactionalEmails.sendTransacEmail({
+      subject: 'Código de recuperación - Serviplantulas',
+      sender: sender(),
+      to: [{ email: emailDestino, name: nombreDestino || emailDestino }],
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #f0e6e6; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #d81b60; text-align: center; margin-bottom: 8px;">Serviplantulas</h2>
+          <h3 style="color: #333333; text-align: center; margin-top: 0;">Recuperación de contraseña</h3>
+          <p style="color: #555555; font-size: 15px;">Hola <strong>${nombreDestino || 'usuario'}</strong>,</p>
+          <p style="color: #555555; font-size: 15px;">Hemos recibido una solicitud para recuperar tu contraseña. Usa el siguiente código de 6 dígitos. Este código vence en <strong>15 minutos</strong>:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #d81b60; background: #fdf2f4; padding: 12px 24px; border-radius: 8px; border: 1px dashed #d81b60; display: inline-block;">
+              ${codigo}
+            </span>
+          </div>
+          <p style="color: #555555; font-size: 14px; text-align: center;">
+            <strong>No compartas este código con nadie.</strong>
+          </p>
+          <p style="color: #888888; font-size: 12px; text-align: center; margin-top: 24px;">
+            Si no solicitaste este cambio, puedes ignorar este correo.
+          </p>
+        </div>
+      `
+    });
+    console.log('Código de recuperación enviado con éxito');
+    return { exito: true, result };
+  } catch (error) {
+    console.error('Error enviando código de recuperación con Brevo:', error);
+    return { exito: false, error };
+  }
+};
+
+/**
+ * Confirma que la contraseña fue actualizada.
+ */
+export const enviarConfirmacionCambioContrasena = async (emailDestino, nombreDestino) => {
+  try {
+    const brevo = clienteBrevo();
+    const result = await brevo.transactionalEmails.sendTransacEmail({
+      subject: 'Contraseña actualizada - Serviplantulas',
+      sender: sender(),
+      to: [{ email: emailDestino, name: nombreDestino || emailDestino }],
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e8e8e8; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #2e7d32; text-align: center; margin-bottom: 8px;">Serviplantulas</h2>
+          <h3 style="color: #333333; text-align: center; margin-top: 0;">Contraseña actualizada</h3>
+          <p style="color: #555555; font-size: 15px;">Hola <strong>${nombreDestino || 'usuario'}</strong>,</p>
+          <p style="color: #555555; font-size: 15px;">Tu contraseña de <strong>Serviplantulas</strong> ha sido actualizada correctamente.</p>
+          <p style="color: #555555; font-size: 15px;">Si tú no realizaste este cambio, contacta al administrador de inmediato.</p>
+          <p style="color: #888888; font-size: 12px; text-align: center; margin-top: 28px;">
+            Este correo fue generado automáticamente por Serviplantulas.
+          </p>
+        </div>
+      `
+    });
+    console.log('Confirmación de cambio de contraseña enviada');
+    return { exito: true, result };
+  } catch (error) {
+    console.error('Error enviando confirmación de contraseña con Brevo:', error);
+    return { exito: false, error };
+  }
+};
+
+/**
+ * Confirma que se actualizaron datos del perfil (email y/o teléfono).
+ * @param {object} cambios - { nuevoEmail?, nuevoTelefono? }
+ */
+export const enviarConfirmacionCambioPerfil = async (emailDestino, nombreDestino, cambios = {}) => {
+  try {
+    const { nuevoEmail, nuevoTelefono } = cambios;
+    const detalleEmail = nuevoEmail
+      ? `<p style="color:#555;font-size:15px;"><strong>Nuevo correo:</strong> ${nuevoEmail}</p>`
+      : '';
+    const detalleTelefono = nuevoTelefono
+      ? `<p style="color:#555;font-size:15px;"><strong>Nuevo teléfono:</strong> ${nuevoTelefono}</p>`
+      : '';
+
+    const brevo = clienteBrevo();
+    const result = await brevo.transactionalEmails.sendTransacEmail({
+      subject: 'Datos de cuenta actualizados - Serviplantulas',
+      sender: sender(),
+      to: [{ email: emailDestino, name: nombreDestino || emailDestino }],
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e8e8e8; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #2e7d32; text-align: center; margin-bottom: 8px;">Serviplantulas</h2>
+          <h3 style="color: #333333; text-align: center; margin-top: 0;">Perfil actualizado</h3>
+          <p style="color: #555555; font-size: 15px;">Hola <strong>${nombreDestino || 'usuario'}</strong>,</p>
+          <p style="color: #555555; font-size: 15px;">Se actualizaron datos de tu cuenta en Serviplantulas.</p>
+          ${detalleEmail}
+          ${detalleTelefono}
+          <p style="color: #555555; font-size: 15px;">Si no fuiste tú, contacta al administrador.</p>
+          <p style="color: #888888; font-size: 12px; text-align: center; margin-top: 28px;">
+            Este correo fue generado automáticamente por Serviplantulas.
+          </p>
+        </div>
+      `
+    });
+    console.log('Confirmación de cambio de perfil enviada');
+    return { exito: true, result };
+  } catch (error) {
+    console.error('Error enviando confirmación de perfil con Brevo:', error);
+    return { exito: false, error };
+  }
+};
+
 function money(v) {
   const n = Number(v) || 0;
   return n.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' COP';
