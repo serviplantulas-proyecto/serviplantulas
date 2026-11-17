@@ -90,9 +90,9 @@ class _DetalleProductoPageState extends State<DetalleProductoPage> {
   @override
   Widget build(BuildContext context) {
     final p = _producto;
-    final desc = (p.descripcion == null || p.descripcion!.trim().isEmpty)
+    final desc = (p.descripcionProducto == null || p.descripcionProducto!.trim().isEmpty)
         ? 'Sin descripción'
-        : p.descripcion!;
+        : p.descripcionProducto!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
