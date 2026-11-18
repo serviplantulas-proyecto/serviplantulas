@@ -80,6 +80,15 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
     setState(() => _eliminando = true);
     try {
       await AuthService.eliminarCuenta();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cuenta eliminada exitosamente'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
       await _irLogin();
     } on AuthException catch (e) {
       if (mounted) {
