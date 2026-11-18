@@ -7,7 +7,6 @@ import '../componentes/compartidos/app_bar_simple.dart';
 import '../models/categoria.dart';
 import '../services/categorias_service.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
 import '../componentes/compartidos/form_label_field.dart';
 import '../styles/app_text_styles.dart';

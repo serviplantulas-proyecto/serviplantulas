@@ -1,6 +1,5 @@
 import '../componentes/analisis/analisis_mas_vendidos.dart';
 import '../componentes/analisis/analisis_ventas_categoria.dart';
-import '../componentes/ventas/factura_list_card.dart';
 import 'facturas_service.dart';
 
 class AnalisisResultado {

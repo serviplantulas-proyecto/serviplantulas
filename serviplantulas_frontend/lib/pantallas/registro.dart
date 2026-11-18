@@ -10,6 +10,7 @@ import '../componentes/registro/registro_email_field.dart';
 import '../componentes/registro/registro_contacto_field.dart';
 import '../componentes/registro/registro_password_field.dart';
 import '../componentes/registro/registro_confirm_password_field.dart';
+import '../componentes/registro/registro_terminos_checkbox.dart';
 import '../componentes/registro/registro_button.dart';
 import '../componentes/registro/registro_login.dart';
 import '../styles/app_colors.dart';
@@ -25,17 +26,14 @@ class RegistroPage extends StatefulWidget {
 
 class _RegistroPageState extends State<RegistroPage> {
   final TextEditingController _nombreController = TextEditingController();
-
   final TextEditingController _emailController = TextEditingController();
-
   final TextEditingController _contactoController = TextEditingController();
-
   final TextEditingController _passwordController = TextEditingController();
-
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
   bool _isLoading = false;
+  bool _aceptaTerminos = false;
 
   Future<void> _crearCuenta() async {
     final nombreCompleto = _nombreController.text.trim();
@@ -44,8 +42,6 @@ class _RegistroPageState extends State<RegistroPage> {
     final telefono = _contactoController.text.trim();
     final digitosTelefono = telefono.replaceAll(RegExp(r'\D'), '').length;
     final contrasena = _passwordController.text;
-
-    
 
     String? error;
     if (nombreCompleto.isEmpty || partesNombre.length < 2) {
@@ -58,12 +54,14 @@ class _RegistroPageState extends State<RegistroPage> {
       error = 'La contraseña no cumple todos los requisitos de seguridad.';
     } else if (contrasena != _confirmPasswordController.text) {
       error = 'Las contraseñas no coinciden.';
+    } else if (!_aceptaTerminos) {
+      error =
+          'Debes aceptar los Términos y Condiciones y la Política de Privacidad.';
     }
 
     if (error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -85,9 +83,8 @@ class _RegistroPageState extends State<RegistroPage> {
       );
     } on AuthException catch (exception) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(exception.message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(exception.message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -115,7 +112,6 @@ class _RegistroPageState extends State<RegistroPage> {
         child: Column(
           children: [
             RegistroHeader(onBack: _irAlLogin),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
@@ -135,47 +131,37 @@ class _RegistroPageState extends State<RegistroPage> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-
                         const SizedBox(height: AppSpacing.small),
-
                         Text(
                           'Registra tus datos para comenzar a utilizar Serviplantulas.',
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
-
                         const SizedBox(height: AppSpacing.extraLarge),
-
                         RegistroNombreField(controller: _nombreController),
-
                         const SizedBox(height: AppSpacing.medium),
-
                         RegistroEmailField(controller: _emailController),
-
                         const SizedBox(height: AppSpacing.medium),
-
                         RegistroContactoField(controller: _contactoController),
-
                         const SizedBox(height: AppSpacing.medium),
-
                         RegistroPasswordField(controller: _passwordController),
-
                         const SizedBox(height: AppSpacing.medium),
-
                         RegistroConfirmPasswordField(
                           controller: _confirmPasswordController,
                         ),
-
-                        const SizedBox(height: AppSpacing.extraLarge),
-
+                        const SizedBox(height: AppSpacing.large),
+                        RegistroTerminosCheckbox(
+                          value: _aceptaTerminos,
+                          onChanged: (v) =>
+                              setState(() => _aceptaTerminos = v),
+                        ),
+                        const SizedBox(height: AppSpacing.large),
                         RegistroButton(
                           onPressed: _crearCuenta,
                           isLoading: _isLoading,
                         ),
-
                         const SizedBox(height: AppSpacing.large),
-
                         Center(child: RegistroLogin(onPressed: _irAlLogin)),
                       ],
                     ),

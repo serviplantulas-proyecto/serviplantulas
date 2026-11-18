@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../componentes/compartidos/input_formatters.dart';
 import '../componentes/recuperar_contrasena/recuperar_badge.dart';
 import '../componentes/recuperar_contrasena/recuperar_button.dart';
 import '../componentes/recuperar_contrasena/recuperar_header.dart';
