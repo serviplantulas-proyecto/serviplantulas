@@ -18,7 +18,7 @@ class DashboardPage extends StatefulWidget {
   final VoidCallback? onChatBot;
   final VoidCallback? onNuevoProducto;
   final VoidCallback? onAnalisis;
-  final VoidCallback? onHistorial;
+  final VoidCallback? onHistorialFacturas;
   final VoidCallback? onNotificaciones;
 
   const DashboardPage({
@@ -28,7 +28,7 @@ class DashboardPage extends StatefulWidget {
     this.onChatBot,
     this.onNuevoProducto,
     this.onAnalisis,
-    this.onHistorial,
+    this.onHistorialFacturas,
     this.onNotificaciones,
   });
 
@@ -129,7 +129,7 @@ class DashboardPageState extends State<DashboardPage> {
                             onChatBot: widget.onChatBot,
                             onNuevoProducto: widget.onNuevoProducto,
                             onAnalisis: widget.onAnalisis,
-                            onHistorial: widget.onHistorial,
+                            onHistorialFacturas: widget.onHistorialFacturas,
                           ),
                         ),
                       ],

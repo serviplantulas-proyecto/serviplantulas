@@ -10,7 +10,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback? onVerInventario;
   final VoidCallback? onChatBot;
   final VoidCallback? onAnalisis;
-  final VoidCallback? onHistorial;
+  final VoidCallback? onHistorialFacturas;
 
   const QuickActionsGrid({
     super.key,
@@ -19,7 +19,7 @@ class QuickActionsGrid extends StatelessWidget {
     this.onVerInventario,
     this.onChatBot,
     this.onAnalisis,
-    this.onHistorial,
+    this.onHistorialFacturas,
   });
 
   @override
@@ -75,8 +75,8 @@ class QuickActionsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             QuickActionButton(
               icon: Icons.receipt_long_outlined,
-              label: 'Historial pedidos',
-              onTap: onHistorial,
+              label: 'Historial de Facturas',
+              onTap: onHistorialFacturas,
             ),
           ],
         ),

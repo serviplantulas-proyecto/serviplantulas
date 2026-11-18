@@ -6,7 +6,7 @@ import 'analisis_ventas_page.dart';
 import 'chat_eva_page.dart';
 import 'clientes_page.dart';
 import 'dashboard_page.dart';
-import 'historial_pedidos_page.dart';
+import 'historial_facturas_page.dart';
 import 'inventario_page.dart';
 import 'menu_mas_page.dart';
 import 'notificaciones_page.dart';
@@ -73,7 +73,7 @@ class _HomeShellState extends State<HomeShell> {
             onChatBot: () => _push(const ChatEvaPage()),
             onNuevoProducto: () => _push(const RegistrarProductoPage()),
             onAnalisis: () => _push(const AnalisisVentasPage()),
-            onHistorial: () => _push(const HistorialPedidosPage()),
+            onHistorialFacturas: () => _push(const HistorialFacturasPage()),
             onNotificaciones: () => _push(const NotificacionesPage()),
           ),
           const InventarioPage(),
