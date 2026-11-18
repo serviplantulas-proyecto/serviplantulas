@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../componentes/compartidos/app_bar_simple.dart';
+import '../componentes/cuenta/mi_cuenta_acciones.dart';
 import '../componentes/cuenta/mi_cuenta_campo_tile.dart';
 import '../componentes/cuenta/mi_cuenta_header.dart';
 import '../componentes/cuenta/mi_cuenta_seguridad.dart';
+import '../services/auth_service.dart';
 import '../services/perfil_prefs.dart';
 import '../styles/app_colors.dart';
-import '../styles/app_radius.dart';
 import '../styles/app_spacing.dart';
 import '../styles/app_text_styles.dart';
 import 'cambiar_dato_solicitar_page.dart';
@@ -22,7 +23,8 @@ class MiCuentaPage extends StatefulWidget {
 
 class _MiCuentaPageState extends State<MiCuentaPage> {
   PerfilPrefs? _p;
-  bool _pass = false, _emailExp = false, _telExp = false, _loading = true;
+  bool _pass = false, _emailExp = false, _telExp = false;
+  bool _loading = true, _eliminando = false;
 
   @override
   void initState() {
@@ -40,8 +42,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
   }
 
   String get _iniciales {
-    final n = _p?.nombre ?? '';
-    final parts = n.trim().split(RegExp(r'\s+'));
+    final parts = (_p?.nombre ?? '').trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return '?';
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
@@ -65,13 +66,35 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
     if (ok == true) _cargar();
   }
 
-  Future<void> _cerrar() async {
+  Future<void> _irLogin() async {
     await PerfilPrefs.cerrarSesion();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginPage()),
       (_) => false,
     );
+  }
+
+  Future<void> _eliminar() async {
+    if (!await confirmarEliminarCuenta(context) || !mounted) return;
+    setState(() => _eliminando = true);
+    try {
+      await AuthService.eliminarCuenta();
+      await _irLogin();
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo eliminar la cuenta')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _eliminando = false);
+    }
   }
 
   @override
@@ -92,7 +115,10 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                         children: [
                           MiCuentaHeader(
                             iniciales: _iniciales,
-                            nombre: p.nombre.split(RegExp(r'\s+')).take(2).join(' '),
+                            nombre: p.nombre
+                                .split(RegExp(r'\s+'))
+                                .take(2)
+                                .join(' '),
                             rol: p.rol,
                           ),
                           const SizedBox(height: AppSpacing.extraLarge),
@@ -132,7 +158,11 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.extraLarge),
-                          _logout(),
+                          MiCuentaAcciones(
+                            onCerrarSesion: _irLogin,
+                            onEliminarCuenta: _eliminar,
+                            eliminando: _eliminando,
+                          ),
                         ],
                       ),
                     ),
@@ -156,23 +186,4 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
           ),
         ),
       );
-
-  Widget _logout() => SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: OutlinedButton(
-          onPressed: _cerrar,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.error,
-            side: const BorderSide(color: AppColors.error),
-            backgroundColor: const Color(0xFFFFF0F0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.medium),
-            ),
-          ),
-          child: Text('Cerrar Sesión',
-              style: AppTextStyles.button.copyWith(color: AppColors.error)),
-        ),
-      );
-
 }

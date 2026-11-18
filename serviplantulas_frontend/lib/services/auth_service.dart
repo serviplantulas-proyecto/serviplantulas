@@ -1,3 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'api_config.dart';
 import 'auth_http.dart';
 
@@ -71,7 +78,7 @@ class AuthService {
     );
   }
 
-   static Future<Map<String, dynamic>> cambiarDatoPerfil({
+  static Future<Map<String, dynamic>> cambiarDatoPerfil({
     required String email,
     required String codigo,
     String? nuevoEmail,
@@ -109,5 +116,43 @@ class AuthService {
       fallbackMessage: 'No fue posible iniciar sesión con Google.',
     );
     await guardarSesionDesdeLogin(decoded);
+  }
+
+  /// Elimina la cuenta del usuario autenticado (Bearer token).
+  static Future<void> eliminarCuenta() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null || token.isEmpty) {
+      throw const AuthException('Sin sesión.');
+    }
+    late final http.Response response;
+    try {
+      response = await http
+          .delete(
+            Uri.parse(ApiConfig.deleteAccountUrl),
+            headers: ApiConfig.authHeaders(token),
+          )
+          .timeout(const Duration(seconds: 30));
+    } on SocketException {
+      throw const AuthException('Sin conexión con el servidor.');
+    } on TimeoutException {
+      throw const AuthException('El servidor no respondió a tiempo.');
+    }
+
+    Map<String, dynamic>? decoded;
+    if (response.body.isNotEmpty) {
+      try {
+        final d = jsonDecode(utf8.decode(response.bodyBytes));
+        if (d is Map<String, dynamic>) decoded = d;
+      } catch (_) {}
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final err = decoded?['error'];
+      throw AuthException(
+        err is String && err.isNotEmpty
+            ? err
+            : 'No se pudo eliminar la cuenta.',
+      );
+    }
   }
 }

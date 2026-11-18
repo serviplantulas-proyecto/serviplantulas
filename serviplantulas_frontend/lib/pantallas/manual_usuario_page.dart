@@ -9,7 +9,7 @@ import '../styles/app_text_styles.dart';
 class ManualUsuarioPage extends StatefulWidget {
   const ManualUsuarioPage({super.key});
 
-  static const assetPath = 'assets/docs/manual_usuario.pdf';
+  static const assetPath = 'assets/docs/manual_de_usuario_serviplantulas.pdf';
 
   @override
   State<ManualUsuarioPage> createState() => _ManualUsuarioPageState();

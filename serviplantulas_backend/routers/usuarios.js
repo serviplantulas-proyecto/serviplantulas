@@ -4,18 +4,19 @@ import {
     login,
     registrarUsuario,
     verificarCuenta,
-    reenviarCodigoVerificacion
+    reenviarCodigoVerificacion,
+    eliminarCuenta
 } from "../controllers/usuario-controller.js";
 
 import { forgotPassword, verifyCode, verifyProfileChange } from "../controllers/recuperar-controller.js";
 
 import { autenticarConGoogle } from "../controllers/googleauth-controller.js";
+import { verificarToken } from "../middlewares/middlewares.js";
 
 const router = express.Router();
 
 // POST - Registrar usuario y enviar código de verificación
 router.post("/register", registrarUsuario);
-
 // POST - Iniciar sesión
 // URL: http://localhost:3000/auth/login
 // Body: JSON
@@ -90,5 +91,7 @@ router.post("/verify-profile-change", verifyProfileChange);
 // Body: { "idToken": "..." }
 router.post("/google", autenticarConGoogle);
 
+// Eliminar cuenta del usuario autenticado
+router.delete("/cuenta", verificarToken, eliminarCuenta);
 
 export default router;

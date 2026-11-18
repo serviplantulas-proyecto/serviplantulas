@@ -25,6 +25,8 @@ class ApiConfig {
     defaultValue: '458687825748-4k5ef66tkmgu3hf1btqpjb7c53isnrc4.apps.googleusercontent.com',
   );
 
+  static String get deleteAccountUrl => '${_apiHost}auth/cuenta';
+
   // ── Chat ──
   static String get chatbotUrl => '${_apiHost}chatbot/';
   static String get chatbotSesionesUrl => '${chatbotUrl}sesiones';

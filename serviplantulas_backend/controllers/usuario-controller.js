@@ -7,7 +7,8 @@ import {
     obtenerUsuarioParaVerificacion,
     verificarUsuario,
     crearUsuario,
-    actualizarUsuario
+    actualizarUsuario,
+    eliminarUsuario
 } from "../models/usuarios-model.js";
 import { enviarCodigoVerificacion } from "../services/email-service.js";
 
@@ -484,4 +485,26 @@ export const verificarCuenta = async (req, res) => {
 
     }
 
+};
+
+export const eliminarCuenta = async (req, res) => {
+    try {
+        const id = req.usuario?.id;
+        if (!id) {
+            return res.status(401).json({ error: "No autenticado" });
+        }
+        const { error } = await eliminarUsuario(id);
+        if (error) {
+            console.error("eliminarCuenta:", error);
+            return res.status(500).json({
+                error: "No se pudo eliminar la cuenta. Inténtalo de nuevo."
+            });
+        }
+        return res.status(200).json({
+            mensaje: "Cuenta eliminada correctamente"
+        });
+    } catch (error) {
+        console.error("Error en eliminarCuenta:", error);
+        return res.status(500).json({ error: "Error interno" });
+    }
 };
