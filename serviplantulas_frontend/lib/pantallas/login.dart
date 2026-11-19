@@ -35,7 +35,6 @@ class _LoginPageState extends State<LoginPage> {
 
   late final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: const ['email', 'profile'],
-    // Necesario para obtener idToken en Android/iOS
     serverClientId: ApiConfig.googleWebClientId,
     clientId: kIsWeb ? ApiConfig.googleWebClientId : null,
   );
@@ -47,20 +46,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   Future<void> _afterLoginOk() async {
     await SessionService().touchActivity();
     if (!mounted) return;
     if (widget.onLoginSuccess != null) {
       widget.onLoginSuccess!();
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeShell()),
-      );
+      return;
     }
+    // pushAndRemoveUntil evita volver al login con el botón atrás
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeShell()),
+      (_) => false,
+    );
   }
 
   Future<void> _iniciarSesion() async {
+    if (_isLoading || _isGoogleLoading) return;
     setState(() => _isLoading = true);
     try {
       await AuthService.iniciarSesion(
@@ -69,9 +75,10 @@ class _LoginPageState extends State<LoginPage> {
       );
       await _afterLoginOk();
     } on AuthException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.message)));
+      _snack(error.message);
+    } catch (e) {
+      // Antes este error se tragaba y solo se apagaba el loading
+      _snack('Error al iniciar sesión: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -82,10 +89,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isGoogleLoading = true);
     try {
       final account = await _googleSignIn.signIn();
-      if (account == null) {
-        // Usuario canceló
-        return;
-      }
+      if (account == null) return;
       final auth = await account.authentication;
       final idToken = auth.idToken;
       if (idToken == null || idToken.isEmpty) {
@@ -96,16 +100,9 @@ class _LoginPageState extends State<LoginPage> {
       await AuthService.iniciarSesionGoogle(idToken: idToken);
       await _afterLoginOk();
     } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
-      }
+      _snack(e.message);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error con Google: $e')),
-        );
-      }
+      _snack('Error con Google: $e');
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }

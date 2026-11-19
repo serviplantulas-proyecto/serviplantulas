@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
-import 'api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'api_config.dart';
+
 class AuthException implements Exception {
   final String message;
   const AuthException(this.message);
@@ -11,12 +14,11 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
-/// POST JSON a endpoints de auth con manejo de errores común.
 Future<Map<String, dynamic>> postAuth({
   required String url,
   required Map<String, Object?> body,
   required String fallbackMessage,
-  Duration timeout = const Duration(seconds: 30),
+  Duration timeout = const Duration(seconds: 45),
 }) async {
   late final http.Response response;
   try {
@@ -50,25 +52,24 @@ Future<Map<String, dynamic>> postAuth({
     );
   }
 
-  if (decoded is! Map<String, dynamic>) {
+  if (decoded is! Map) {
     throw const AuthException(
       'El servidor devolvió una respuesta no válida.',
     );
   }
 
+  final map = Map<String, dynamic>.from(decoded);
+
   if (response.statusCode < 200 || response.statusCode >= 300) {
-    final error = decoded['error'];
+    final error = map['error'];
     throw AuthException(
       error is String && error.isNotEmpty ? error : fallbackMessage,
     );
   }
 
-  return decoded;
+  return map;
 }
 
-
-
-/// Guarda token y datos básicos del usuario en SharedPreferences.
 Future<void> guardarSesionDesdeLogin(
   Map<String, dynamic> decoded, {
   String? emailFallback,
@@ -91,28 +92,40 @@ Future<void> guardarSesionDesdeLogin(
   final u = decoded['usuario'];
   if (u is! Map) return;
 
+  final usuario = Map<String, dynamic>.from(u);
+
   await preferences.setString(
     'user_email',
-    (u['email'] ?? emailFallback ?? '').toString(),
+    (usuario['email'] ?? emailFallback ?? '').toString(),
   );
   await preferences.setString(
     'user_nombre',
-    (u['nombre'] ?? '').toString(),
+    (usuario['nombre'] ?? '').toString(),
   );
   await preferences.setString(
     'user_apellido',
-    (u['apellido'] ?? '').toString(),
+    (usuario['apellido'] ?? '').toString(),
   );
-  if (u['telefono'] != null) {
-    await preferences.setString('user_telefono', u['telefono'].toString());
-  }
-  if (u['id'] != null) {
-    await preferences.setInt(
-      'user_id',
-      int.tryParse(u['id'].toString()) ?? 0,
+  await preferences.setString(
+    'user_rol',
+    (usuario['rol'] ?? 'usuario').toString(),
+  );
+  if (usuario['telefono'] != null) {
+    await preferences.setString(
+      'user_telefono',
+      usuario['telefono'].toString(),
     );
   }
-  if (u['avatar'] != null) {
-    await preferences.setString('user_avatar', u['avatar'].toString());
+  if (usuario['id'] != null) {
+    await preferences.setInt(
+      'user_id',
+      int.tryParse(usuario['id'].toString()) ?? 0,
+    );
+  }
+  if (usuario['avatar'] != null) {
+    await preferences.setString(
+      'user_avatar',
+      usuario['avatar'].toString(),
+    );
   }
 }

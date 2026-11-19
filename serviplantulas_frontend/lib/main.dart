@@ -9,19 +9,45 @@ import 'styles/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final impl = ImagePickerPlatform.instance;
-  if (impl is ImagePickerAndroid) {
-    impl.useAndroidPhotoPicker = true;
-  }
+  try {
+    final impl = ImagePickerPlatform.instance;
+    if (impl is ImagePickerAndroid) {
+      impl.useAndroidPhotoPicker = true;
+    }
+  } catch (_) {}
 
-  await LocalNotificationService.instance.init();
-  await LocalNotificationService.instance.pedirPermiso();
+  // NO pedir permisos ni init de notificaciones aquí:
+  // en Android release suele cerrar la app a los pocos segundos.
 
   runApp(const MainApp());
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Después del primer frame, inicializar en segundo plano
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initNotificacionesSeguro();
+    });
+  }
+
+  Future<void> _initNotificacionesSeguro() async {
+    try {
+      await LocalNotificationService.instance.init();
+      // El permiso se puede pedir después; no bloquear el arranque
+      await LocalNotificationService.instance.pedirPermiso();
+    } catch (_) {
+      // Si falla, la app sigue; solo no habrá push local
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,5 +58,3 @@ class MainApp extends StatelessWidget {
     );
   }
 }
-
-//janiersena25@
