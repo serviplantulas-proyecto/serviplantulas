@@ -19,6 +19,11 @@ conectaDB();
 //creamos la aplicacion de express
 const app = express();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+
 //leer el json
 app.use(cors());
 app.use(express.json());
@@ -36,6 +41,12 @@ app.get("/", (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
+
+// Politica de privacidad publica (Play Store)
+app.get('/privacidad', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'privacidad.html'));
+});
+
 //rutas de autentificacion
 app.use("/productos", productosRouter);
 app.use("/categorias", categoriasRouter);
@@ -51,6 +62,8 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+
 
 //configuramos el puerto 
 const PORT = process.env.PORT || 3000;
