@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eliminación de cuenta — Serviplantulas</title>
+  <style>
+    :root {
+      --bg: #f4f7f5; --card: #fff; --text: #1a2e24; --muted: #5a6b62;
+      --primary: #1b5e3b; --accent: #2d8a5e; --border: #e2ebe6; --danger: #b42318;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.65;
+      padding: 24px 16px 48px;
+    }
+    .wrap {
+      max-width: 720px; margin: 0 auto; background: var(--card);
+      border-radius: 16px; padding: 32px 28px;
+      box-shadow: 0 4px 24px rgba(27, 94, 59, 0.06);
+      border: 1px solid var(--border);
+    }
+    h1 { font-size: 1.6rem; color: var(--primary); margin-bottom: 8px; }
+    .meta { color: var(--muted); font-size: 0.92rem; margin-bottom: 20px; }
+    h2 { font-size: 1.1rem; color: var(--primary); margin: 24px 0 10px; }
+    p, li { margin-bottom: 10px; }
+    ol, ul { margin: 8px 0 16px 1.25rem; }
+    .note {
+      background: #eef6f1; border-left: 3px solid var(--accent);
+      padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 16px 0;
+    }
+    .warn {
+      background: #fef3f2; border-left: 3px solid var(--danger);
+      padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 16px 0;
+    }
+    footer {
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      font-size: 0.88rem; color: var(--muted); text-align: center;
+    }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Eliminación de cuenta — Serviplantulas</h1>
+    <p class="meta">
+      Aplicación: <strong>Serviplantulas</strong> · Proyecto formativo SENA ADSO<br />
+      Última actualización: 22 de noviembre de 2026
+    </p>
+
+    <p>
+      Esta página describe cómo un usuario puede solicitar la eliminación de su cuenta
+      y de los datos asociados en la aplicación móvil <strong>Serviplantulas</strong>.
+    </p>
+
+    <h2>1. Cómo eliminar la cuenta desde la app</h2>
+    <ol>
+      <li>Abre <strong>Serviplantulas</strong> e inicia sesión con tu correo y contraseña (o Google).</li>
+      <li>Ve a <strong>Más</strong> → <strong>Mi cuenta</strong> (también puedes entrar desde el avatar del inicio).</li>
+      <li>Desplázate hasta el final de la pantalla.</li>
+      <li>Toca <strong>Eliminar cuenta</strong>.</li>
+      <li>Confirma en el cuadro de diálogo.</li>
+    </ol>
+    <p class="note">
+      La eliminación se procesa de inmediato en el servidor. Al confirmar, se cierra la sesión
+      y ya no podrás entrar con esa cuenta.
+    </p>
+
+    <h2>2. Qué datos se borran</h2>
+    <ul>
+      <li>Datos de la cuenta: nombre, apellido, correo, teléfono, contraseña (hash), Google ID y avatar si aplica.</li>
+      <li>Sesión y tokens de acceso asociados a ese usuario.</li>
+      <li>Preferencias de notificaciones ligadas a la cuenta, cuando corresponda.</li>
+    </ul>
+
+    <h2>3. Qué puede conservarse</h2>
+    <p>
+      Por integridad del historial del negocio (ventas y facturas del vivero), algunos registros
+      operativos pueden mantener referencias históricas (por ejemplo datos de facturas ya emitidas)
+      sin permitir el acceso de la cuenta eliminada. Los datos de cuenta de usuario se eliminan
+      en la medida técnicamente posible al usar la opción de la app.
+    </p>
+
+    <h2>4. Solicitud por fuera de la app</h2>
+    <p>
+      Si no puedes acceder a la aplicación, puedes solicitar la eliminación de la cuenta
+      contactando al equipo del proyecto formativo Serviplantulas (SENA ADSO) e indicando
+      el correo registrado en la app. Se procesará la solicitud en un plazo razonable.
+    </p>
+
+    <p class="warn">
+      La eliminación de la cuenta es irreversible. Asegúrate de exportar o anotar cualquier
+      información que necesites antes de confirmar.
+    </p>
+
+    <h2>5. Política de privacidad</h2>
+    <p>
+      Más detalles sobre el tratamiento de datos:
+      <a href="/privacidad">Política de privacidad de Serviplantulas</a>
+      (ajusta este enlace si publicas la política en otra URL).
+    </p>
+
+    <footer>
+      Serviplantulas · Eliminación de cuenta · SENA ADSO
+    </footer>
+  </main>
+</body>
+</html>
