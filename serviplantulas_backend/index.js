@@ -20,7 +20,9 @@ conectaDB();
 
 //creamos la aplicacion de express
 const app = express();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 //leer el json
 app.use(cors());
@@ -40,10 +42,17 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+
+// Archivos públicos (HTML de políticas)
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/privacidad", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "privacidad.html"));
 });
 
+app.get("/eliminacion-cuenta", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "eliminacion-cuenta.html"));
+});
 //rutas de autentificacion
 app.use("/productos", productosRouter);
 app.use("/categorias", categoriasRouter);
