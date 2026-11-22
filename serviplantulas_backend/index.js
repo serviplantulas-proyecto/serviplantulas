@@ -11,6 +11,8 @@ import detallePedidosRouter from "./routers/detalle-pedidos.js";
 import notificacionesRouter from "./routers/notificaciones.js";
 import chatRouters from "./routers/chatbot.js";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
 //cargamos las variables
 dotenv.config();
@@ -18,6 +20,7 @@ conectaDB();
 
 //creamos la aplicacion de express
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 //leer el json
 app.use(cors());
@@ -36,6 +39,11 @@ app.get("/", (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
+
+app.get("/privacidad", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "privacidad.html"));
+});
+
 //rutas de autentificacion
 app.use("/productos", productosRouter);
 app.use("/categorias", categoriasRouter);
