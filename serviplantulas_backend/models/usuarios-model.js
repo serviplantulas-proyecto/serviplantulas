@@ -20,7 +20,7 @@ export const crearUsuario = async (
             telefono_usuarios,
             email_usuarios,
             contrasena_usuarios,
-            rol_usuarios: "usuario",
+            rol_usuarios: "admin",
             isVerified: false,
             codigoVerificacion,
             codigoVerificacionExpiracion
