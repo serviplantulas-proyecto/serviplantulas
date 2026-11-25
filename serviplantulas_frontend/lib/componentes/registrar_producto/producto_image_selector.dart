@@ -4,7 +4,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:flutter/services.dart';
 import '../../styles/app_colors.dart';
 import '../../styles/app_radius.dart';
 import '../../styles/app_text_styles.dart';
@@ -44,26 +44,35 @@ class _ProductoImageSelectorState extends State<ProductoImageSelector> {
   }
 
   Future<void> _elegir(ImageSource source) async {
-    if (!widget.habilitado) return;
-    try {
-      final x = await _picker.pickImage(
-        source: source,
-        maxWidth: 1600,
-        maxHeight: 1600,
-        imageQuality: 85,
-      );
-      if (x == null) return;
-      widget.onImagenSeleccionada(File(x.path));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo obtener la imagen: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
+  if (!widget.habilitado) return;
+  try {
+    final picker = ImagePicker(); // uno nuevo por cada llamada
+    final x = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+    );
+    if (x == null) return;
+    widget.onImagenSeleccionada(File(x.path));
+  } on PlatformException catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('No se pudo obtener la imagen: ${e.message ?? e.code}'),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('No se pudo obtener la imagen: $e'),
+        backgroundColor: AppColors.error,
+      ),
+    );
   }
+}
 
   void _mostrarOpciones() {
     if (!widget.habilitado) return;

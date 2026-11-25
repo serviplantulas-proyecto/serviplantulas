@@ -10,10 +10,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    final impl = ImagePickerPlatform.instance;
-    if (impl is ImagePickerAndroid) {
-      impl.useAndroidPhotoPicker = true;
-    }
+    // final impl = ImagePickerPlatform.instance;
+    // if (impl is ImagePickerAndroid) {
+    //   ImagePickerAndroid().useAndroidPhotoPicker = true;
+    // }
   } catch (_) {}
 
   // NO pedir permisos ni init de notificaciones aquí:
