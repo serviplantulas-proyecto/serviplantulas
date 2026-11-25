@@ -20,7 +20,7 @@ export const crearUsuario = async (
             telefono_usuarios,
             email_usuarios,
             contrasena_usuarios,
-            rol_usuarios: "usuario",
+            rol_usuarios: "admin",
             isVerified: false,
             codigoVerificacion,
             codigoVerificacionExpiracion
@@ -143,7 +143,7 @@ export const verificarUsuario = async (id) => {
     email_usuarios,
     googleId,
     avatar,
-    rol_usuarios = "usuario"
+    rol_usuarios = "admin"
 }) => {
     const hashPlaceholder = await bcrypt.hash(
         `google_${googleId}_${Date.now()}`,
