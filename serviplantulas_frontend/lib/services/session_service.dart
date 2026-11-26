@@ -1,10 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Sesión local: token + caducidad por inactividad (15 min).
+/// Sesión local: el token se mantiene hasta cerrar sesión manualmente.
 class SessionService {
   static const _kToken = 'auth_token';
-  static const _kLast = 'session_last_activity_ms';
-  static const inactivityTimeout = Duration(minutes: 15);
 
   Future<bool> hasToken() async {
     final p = await SharedPreferences.getInstance();
@@ -12,35 +10,18 @@ class SessionService {
     return t != null && t.isNotEmpty;
   }
 
-  /// True si hay token y no superó los 15 min desde la última actividad.
+  /// True si hay token guardado (no se limpia al salir de la app).
   Future<bool> hasValidSession() async {
-    final p = await SharedPreferences.getInstance();
-    final t = p.getString(_kToken);
-    if (t == null || t.isEmpty) return false;
-
-    final last = p.getInt(_kLast);
-    if (last == null) {
-      await touchActivity();
-      return true;
-    }
-
-    final elapsed = DateTime.now().millisecondsSinceEpoch - last;
-    if (elapsed > inactivityTimeout.inMilliseconds) {
-      await clearSession();
-      return false;
-    }
-    return true;
+    return hasToken();
   }
 
   Future<void> touchActivity() async {
-    final p = await SharedPreferences.getInstance();
-    await p.setInt(_kLast, DateTime.now().millisecondsSinceEpoch);
+    // Ya no se usa para caducar sesión; se deja por compatibilidad.
   }
 
   Future<void> clearSession() async {
     final p = await SharedPreferences.getInstance();
     await p.remove(_kToken);
-    await p.remove(_kLast);
-    // Opcional: no borramos user_* para rellenar email en login
+    await p.remove('session_last_activity_ms');
   }
 }

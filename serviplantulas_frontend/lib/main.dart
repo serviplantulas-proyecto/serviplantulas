@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker_android/image_picker_android.dart';
-import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-import 'package:serviplantulas_frontend/pantallas/login.dart';
-
+import 'pantallas/auth_gate.dart';
 import 'services/local_notification_service.dart';
 import 'styles/app_theme.dart';
 
@@ -54,7 +51,7 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      home: const AuthGate(),
     );
   }
 }
