@@ -151,7 +151,7 @@ export const verificarUsuario = async (id) => {
     );
 
     const fila = {
-        nombre_usuarios: (nombre_usuarios || "Usuario").toString().trim(),
+        nombre_usuarios: (nombre_usuarios || "admin").toString().trim(),
         apellido_usuarios: (apellido_usuarios || "").toString().trim(),
         telefono_usuarios: "",
         email_usuarios: String(email_usuarios).trim().toLowerCase(),
