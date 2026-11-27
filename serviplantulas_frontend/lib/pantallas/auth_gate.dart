@@ -5,7 +5,6 @@ import '../styles/app_colors.dart';
 import 'home_shell.dart';
 import 'login.dart';
 
-/// Si hay token → Home; si no → Login.
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -13,7 +12,7 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<AuthGate> {
+class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   final _session = SessionService();
   bool _loading = true;
   bool _authed = false;
@@ -21,7 +20,14 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bootstrap();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _bootstrap() async {
@@ -31,6 +37,23 @@ class _AuthGateState extends State<AuthGate> {
       _authed = ok;
       _loading = false;
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _onResume();
+    }
+  }
+
+  Future<void> _onResume() async {
+    final ok = await _session.hasValidSession();
+    if (!mounted) return;
+    if (!ok && _authed) {
+      setState(() => _authed = false);
+    } else if (ok && !_authed) {
+      setState(() => _authed = true);
+    }
   }
 
   void _onLoggedIn() {
